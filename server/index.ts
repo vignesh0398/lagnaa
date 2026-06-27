@@ -1,3 +1,4 @@
+import './bootstrapEnv.js';
 import http from 'http';
 import express from 'express';
 import cors from 'cors';
@@ -26,6 +27,7 @@ import prospectsRoutes from './routes/prospects.js';
 import mapsLeadsRoutes from './routes/mapsLeads.js';
 import newsRoutes from './routes/news.js';
 import { getWebhookBaseUrl, startTunnel } from './tunnel.js';
+import { loadedSecretFiles } from './bootstrapEnv.js';
 import { isMongoConfigured } from './db/mongoTeam.js';
 import { initTeamStore, isTeamPersistenceDurable, getTeamPersistenceMode } from './teamStore.js';
 
@@ -51,6 +53,7 @@ app.get('/api/health', (_req, res) => {
     teamPersistence: getTeamPersistenceMode(),
     teamDataDurable: isTeamPersistenceDurable(),
     mongodbEnvSet: isMongoConfigured(),
+    secretEnvFilesLoaded: loadedSecretFiles,
   });
 });
 
