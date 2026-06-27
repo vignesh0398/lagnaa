@@ -72,7 +72,7 @@ export function HomeHub() {
             animate={{ y: [0, -6, 0] }}
             transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
           >
-            <LagnaaLogo size={88} blend />
+            <LagnaaLogo size={72} blend />
           </motion.div>
 
           <p className="text-sm font-medium text-accent-cyan">{timeGreeting()}, {firstName}</p>

@@ -96,7 +96,7 @@ export function Login() {
           className="mb-8 text-center"
         >
           <div className="mx-auto mb-4 flex justify-center">
-            <LagnaaLogo size={148} blend animated />
+            <LagnaaLogo size={104} blend animated />
           </div>
           <h1 className="text-3xl font-bold text-white">
             Welcome to <span className="gradient-text">{BRAND_NAME}</span>
