@@ -1,7 +1,21 @@
+export interface DashboardRecentCall {
+  customerName: string;
+  time: string;
+  outcome: string;
+  agent: string;
+}
+
 export interface DashboardStats {
   connected: boolean;
+  twilioConfigured?: boolean;
+  groqConnected?: boolean;
+  twilioError?: string | null;
   activeAgents: number;
+  totalAgents?: number;
+  publishedAgentName?: string | null;
   totalCalls: number;
+  callsToday?: number;
+  totalContacts?: number;
   systemHealth: string;
   lastUpdated: string;
   cluster: {
@@ -12,6 +26,7 @@ export interface DashboardStats {
   };
   callsPerDay: { date: string; count: number }[];
   callsPerMinute: number[];
+  recentCalls?: DashboardRecentCall[];
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
