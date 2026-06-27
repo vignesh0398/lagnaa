@@ -102,3 +102,22 @@ export function getStoredRecord(callSid: string): StoredCallRecord | undefined {
 export function listStoredRecords(): StoredCallRecord[] {
   return loadAll();
 }
+
+export function anonymizeCallHistoryForPhones(matchPhone: (phone: string) => boolean): number {
+  const records = loadAll();
+  let count = 0;
+  const next = records.map((record) => {
+    const phoneHit = matchPhone(record.from) || matchPhone(record.to);
+    if (!phoneHit) return record;
+    count += 1;
+    return {
+      ...record,
+      customerName: 'Erased',
+      from: matchPhone(record.from) ? 'erased' : record.from,
+      to: matchPhone(record.to) ? 'erased' : record.to,
+      summary: '[GDPR erased]',
+    };
+  });
+  if (count) saveAll(next);
+  return count;
+}

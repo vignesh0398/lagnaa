@@ -13,6 +13,7 @@ import {
 import { Header } from '../components/layout/Header';
 import { EmptyState } from '../components/ui/EmptyState';
 import { ContactProfileDetails } from '../components/contacts/ContactProfileDetails';
+import { ContactGdprPanel } from '../components/contacts/ContactGdprPanel';
 import {
   getContactConversations,
   getContacts,
@@ -238,6 +239,14 @@ export function Conversations() {
               </div>
 
               <ContactProfileDetails contact={selectedContact} />
+
+              <ContactGdprPanel
+                contact={selectedContact}
+                onUpdated={(updated) => {
+                  setActiveContact(updated);
+                  setContacts((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+                }}
+              />
 
               {selectedContact.dnd && (
                 <div className="flex items-center gap-2 border-b border-red-500/20 bg-red-500/10 px-5 py-2 text-xs text-red-200">

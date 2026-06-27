@@ -17,6 +17,9 @@ const MAX_CONTACTS = 5000;
 const DEFAULT_CONFIG: ContactsConfig = {
   autoCallOnTag: false,
   callTriggerTag: 'call-now',
+  gdprRetentionMonths: 0,
+  gdprCompanyName: 'DataCrew',
+  gdprDpoEmail: '',
 };
 
 interface ContactsStore {

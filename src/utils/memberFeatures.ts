@@ -81,7 +81,7 @@ const FEATURE_PATHS: Record<MemberFeature, string[]> = {
   billing: ['/billing'],
   knowledge: ['/knowledge'],
   gateway: ['/gateway'],
-  security: ['/security'],
+  security: ['/security', '/settings/privacy', '/settings/gdpr'],
   appearance: ['/settings/appearance'],
 };
 
@@ -123,7 +123,12 @@ export function resolveFeatureForPath(pathname: string): MemberFeature | null {
 }
 
 export function isAlwaysAllowedPath(pathname: string): boolean {
-  return pathname === '/home' || pathname.startsWith('/home/');
+  return (
+    pathname === '/home' ||
+    pathname.startsWith('/home/') ||
+    pathname === '/settings/privacy' ||
+    pathname.startsWith('/settings/privacy/')
+  );
 }
 
 const ADMIN_ONLY_PATHS = ['/team'];

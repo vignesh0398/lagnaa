@@ -5,6 +5,7 @@ import {
   Bot,
   PhoneCall,
   ShieldCheck,
+  Shield,
   FileText,
   BookOpen,
   Cable,
@@ -112,6 +113,8 @@ const personalItems: NavItem[] = [
 ];
 
 const settingsItems: NavItem[] = [
+  { to: '/settings/privacy', icon: Shield, label: 'Privacy Policy' },
+  { to: '/settings/gdpr', icon: ShieldCheck, label: 'GDPR Settings' },
   { to: '/analytics', icon: BarChart3, label: 'Analytics Hub' },
   { to: '/integrations', icon: Webhook, label: 'API & Webhooks' },
   { to: '/ghl', icon: Building2, label: 'GoHighLevel Sync' },
@@ -128,13 +131,14 @@ function groupForPath(pathname: string): string | null {
   if (['/agents', '/calls', '/prompts'].some((p) => pathname.startsWith(p))) return 'calls';
   if (pathname.startsWith('/contacts') || pathname.startsWith('/conversations')) return null;
   if (pathname.startsWith('/settings/appearance')) return 'personal';
+  if (pathname.startsWith('/settings/privacy') || pathname.startsWith('/settings/gdpr')) return 'settings';
   if (pathname.startsWith('/whatsapp')) return 'whatsapp';
   if (pathname.startsWith('/email')) return 'email';
   if (pathname.startsWith('/prospects')) return 'prospects';
   if (pathname.startsWith('/maps-leads')) return 'maps-leads';
   if (pathname.startsWith('/marketing')) return 'marketing';
   if (
-    ['/analytics', '/integrations', '/ghl', '/billing', '/knowledge', '/gateway', '/team', '/security'].some(
+    ['/analytics', '/integrations', '/ghl', '/billing', '/knowledge', '/gateway', '/team', '/security', '/settings/privacy', '/settings/gdpr'].some(
       (p) => pathname === p || pathname.startsWith(`${p}/`)
     )
   ) {

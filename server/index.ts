@@ -26,6 +26,7 @@ import contactsRoutes from './routes/contacts.js';
 import prospectsRoutes from './routes/prospects.js';
 import mapsLeadsRoutes from './routes/mapsLeads.js';
 import newsRoutes from './routes/news.js';
+import gdprRoutes from './routes/gdpr.js';
 import { getWebhookBaseUrl, startTunnel } from './tunnel.js';
 import { loadedSecretFiles } from './bootstrapEnv.js';
 import { friendlyMongoError, isMongoConfigured } from './db/mongoTeam.js';
@@ -84,6 +85,7 @@ app.use('/api/contacts', contactsRoutes);
 app.use('/api/prospects', prospectsRoutes);
 app.use('/api/maps-leads', mapsLeadsRoutes);
 app.use('/api/news', newsRoutes);
+app.use('/api/gdpr', gdprRoutes);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distPath = path.join(__dirname, '..', 'dist');

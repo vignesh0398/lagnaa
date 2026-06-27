@@ -246,6 +246,25 @@ export function listChatRecords(): StoredChatRecord[] {
   return loadAll();
 }
 
+export function anonymizeChatHistoryForPhones(matchPhone: (phone: string) => boolean): number {
+  const records = loadAll();
+  let count = 0;
+  const next = records.map((record) => {
+    if (!matchPhone(record.to) && !matchPhone(record.from)) return record;
+    count += 1;
+    return {
+      ...record,
+      customerName: 'Erased',
+      to: matchPhone(record.to) ? 'erased' : record.to,
+      from: matchPhone(record.from) ? 'erased' : record.from,
+      summary: '[GDPR erased]',
+      transcript: [],
+    };
+  });
+  if (count) saveAll(next);
+  return count;
+}
+
 export function getChatRecord(id: string): StoredChatRecord | undefined {
   return loadAll().find((r) => r.id === id || r.sessionId === id);
 }

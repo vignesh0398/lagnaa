@@ -23,6 +23,10 @@ export interface Contact {
   lastCalledAt?: string;
   lastCallSid?: string;
   callCount: number;
+  gdprLegalBasis?: string;
+  gdprConsentAt?: string;
+  gdprConsentSource?: string;
+  gdprErasedAt?: string;
 }
 
 export interface ContactsConfig {

@@ -145,3 +145,10 @@ export function getTranscript(callSid: string): string {
 export function getCallOutcome(callSid: string): CallOutcomes | null {
   return sessions.get(callSid)?.outcomes ?? null;
 }
+
+export function hasActiveCallForContact(contactId: string): boolean {
+  for (const session of sessions.values()) {
+    if (session.contactId === contactId && !session.endedAt) return true;
+  }
+  return false;
+}

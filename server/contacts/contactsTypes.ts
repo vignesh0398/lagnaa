@@ -1,3 +1,5 @@
+import type { GdprLegalBasis } from './gdprContact.js';
+
 export interface Contact {
   id: string;
   name: string;
@@ -21,9 +23,16 @@ export interface Contact {
   lastCalledAt?: string;
   lastCallSid?: string;
   callCount: number;
+  gdprLegalBasis?: GdprLegalBasis;
+  gdprConsentAt?: string;
+  gdprConsentSource?: string;
+  gdprErasedAt?: string;
 }
 
 export interface ContactsConfig {
   autoCallOnTag: boolean;
   callTriggerTag: string;
+  gdprRetentionMonths?: number;
+  gdprCompanyName?: string;
+  gdprDpoEmail?: string;
 }

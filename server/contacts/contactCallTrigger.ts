@@ -1,4 +1,5 @@
 import { scheduleOutboundCall } from '../callQueue.js';
+import { canStartNewOutreach } from './gdprContact.js';
 import { getContactById, getContactsByIds, getContactsConfig, listContacts } from './contactsStore.js';
 
 const DEDUPE_MS = 10 * 60 * 1000;
@@ -24,7 +25,10 @@ export async function triggerCallForContact(
 ): Promise<{ ok: boolean; message: string; callSid?: string; queued?: boolean }> {
   const contact = getContactById(contactId);
   if (!contact) return { ok: false, message: 'Contact not found' };
-  if (contact.dnd) return { ok: false, message: 'Contact is on DND — calls disabled' };
+  if (!canStartNewOutreach(contact)) {
+    if (contact.gdprErasedAt) return { ok: false, message: 'Contact was GDPR-erased — new calls blocked' };
+    return { ok: false, message: 'Contact is on DND — calls disabled' };
+  }
   if (!contact.phone?.trim()) return { ok: false, message: 'Contact has no phone number' };
 
   if (recentlyTriggered(contactId)) {
@@ -86,7 +90,7 @@ export async function callContactsByIds(
   source = 'contact_bulk',
   agentId?: string
 ): Promise<BulkCallResult> {
-  const contacts = getContactsByIds(contactIds).filter((c) => c.phone?.trim() && !c.dnd);
+  const contacts = getContactsByIds(contactIds).filter((c) => c.phone?.trim() && canStartNewOutreach(c));
   return runBulkCalls(contacts, source, agentId);
 }
 
@@ -102,7 +106,7 @@ export async function callContactsByTags(
   const contacts = listContacts().filter(
     (c) =>
       c.phone?.trim() &&
-      !c.dnd &&
+      canStartNewOutreach(c) &&
       wanted.some((t) => c.tags.some((x) => x.toLowerCase() === t))
   );
   return runBulkCalls(contacts, source, agentId);

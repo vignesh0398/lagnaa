@@ -33,6 +33,8 @@ import { Conversations } from './pages/Conversations';
 import { ProspectFinder } from './pages/ProspectFinder';
 import { MapsLeadFinder } from './pages/MapsLeadFinder';
 import { HomeHub } from './pages/HomeHub';
+import { PrivacyPolicy } from './pages/PrivacyPolicy';
+import { GdprSettings } from './pages/GdprSettings';
 
 
 export default function App() {
@@ -45,6 +47,8 @@ export default function App() {
         <Route element={<AppLayout />}>
           <Route element={<RoleGuard />}>
             <Route path="/settings/appearance" element={<AppearanceSettings />} />
+            <Route path="/settings/privacy" element={<PrivacyPolicy />} />
+            <Route path="/settings/gdpr" element={<GdprSettings />} />
             <Route path="/home" element={<HomeHub />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/contacts" element={<Contacts />} />

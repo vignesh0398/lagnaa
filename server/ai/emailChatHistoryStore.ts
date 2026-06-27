@@ -239,6 +239,25 @@ export function listEmailRecords(): StoredEmailRecord[] {
   return loadAll();
 }
 
+export function anonymizeEmailHistoryForAddress(matchEmail: (email: string) => boolean): number {
+  const records = loadAll();
+  let count = 0;
+  const next = records.map((record) => {
+    if (!matchEmail(record.to) && !matchEmail(record.from)) return record;
+    count += 1;
+    return {
+      ...record,
+      customerName: 'Erased',
+      to: matchEmail(record.to) ? 'erased@removed.local' : record.to,
+      from: matchEmail(record.from) ? 'erased@removed.local' : record.from,
+      summary: '[GDPR erased]',
+      transcript: [],
+    };
+  });
+  if (count) saveAll(next);
+  return count;
+}
+
 export function getEmailTranscript(id: string): string {
   const record = loadAll().find((r) => r.id === id || r.sessionId === id);
   if (!record) return 'Session not found.';
