@@ -8,14 +8,14 @@ services:
     runtime: node
     plan: free
     region: singapore
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
-      - key: NODE_ENV
-        value: production
       - key: ENABLE_TUNNEL
         value: false
+      - key: PUPPETEER_SKIP_DOWNLOAD
+        value: "true"
       # Render sets PORT automatically — do not override
       # Webhook URL auto-detected from RENDER_EXTERNAL_URL (see server/tunnel.ts)
       - key: TWILIO_ACCOUNT_SID

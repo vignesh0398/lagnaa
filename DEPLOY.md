@@ -32,7 +32,7 @@ One server runs the **API + React app** together in production.
    | Runtime | Node |
    | Region | Singapore (closest to India) |
    | Branch | `main` |
-   | Build Command | `npm ci && npm run build` |
+   | Build Command | `npm ci --include=dev && npm run build` |
    | Start Command | `npm start` |
    | Plan | Free |
 
@@ -40,8 +40,8 @@ One server runs the **API + React app** together in production.
 
    | Key | Value |
    |-----|--------|
-   | `NODE_ENV` | `production` |
    | `ENABLE_TUNNEL` | `false` |
+   | `PUPPETEER_SKIP_DOWNLOAD` | `true` |
    | `TWILIO_ACCOUNT_SID` | your value |
    | `TWILIO_AUTH_TOKEN` | your value |
    | `TWILIO_PHONE_NUMBER` | your value |
