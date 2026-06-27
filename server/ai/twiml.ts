@@ -1,4 +1,5 @@
 import { getVoiceId } from './agentSettings.js';
+import { CLIENT_SILENCE_TIMEOUT_SEC } from './voiceStack.js';
 import { getWebhookBaseUrl } from '../tunnel.js';
 
 export function escapeXml(text: string): string {
@@ -47,7 +48,7 @@ function gatherAttrs(lang: string, timeout: number, hints: string): string {
 
 function gatherBlock(
   lang: string,
-  timeout = 20,
+  timeout = CLIENT_SILENCE_TIMEOUT_SEC,
   hints = 'yes, no, hello, hi, speaking, interested, date of birth, postcode, january, february, march, april, may, june, july, august, september, october, november, december'
 ): string {
   const respondUrl = gatherUrl('/api/twilio/voice/ai-respond');
@@ -62,7 +63,7 @@ export function buildOpeningTwiml(hello: string, intro: string, toNumber?: strin
   ${sayChunks(hello)}
   <Pause length="1"/>
   ${sayChunks(intro)}
-  ${gatherBlock(lang, 22, 'yes, no, hello, hi, speaking, this is, correct, wrong number')}
+  ${gatherBlock(lang, CLIENT_SILENCE_TIMEOUT_SEC, 'yes, no, hello, hi, speaking, this is, correct, wrong number')}
   <Redirect method="POST">${gatherUrl('/api/twilio/voice/ai-no-speech')}</Redirect>
 </Response>`;
 }
@@ -73,7 +74,7 @@ export function buildContinueTwiml(reply: string, toNumber?: string, pauseBefore
 <Response>
   ${sayChunks(reply)}
   <Pause length="${pauseBeforeListen}"/>
-  ${gatherBlock(lang, 22)}
+  ${gatherBlock(lang, CLIENT_SILENCE_TIMEOUT_SEC)}
   <Redirect method="POST">${gatherUrl('/api/twilio/voice/ai-no-speech')}</Redirect>
 </Response>`;
 }
@@ -83,7 +84,7 @@ export function buildRepromptTwiml(message: string, toNumber?: string): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   ${sayChunks(message)}
-  ${gatherBlock(lang, 18)}
+  ${gatherBlock(lang, CLIENT_SILENCE_TIMEOUT_SEC)}
   <Redirect method="POST">${gatherUrl('/api/twilio/voice/ai-no-speech')}</Redirect>
 </Response>`;
 }

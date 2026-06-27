@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AlertCircle,
+  Bot,
   CheckCircle2,
   FileSpreadsheet,
   Loader2,
@@ -38,6 +40,7 @@ import {
   type Contact,
   type ContactsConfig,
 } from '../api/contacts';
+import { getAgents, type Agent } from '../api/agents';
 import {
   CONTACT_FILTER_FIELDS,
   PAGE_SIZE_OPTIONS,
@@ -51,6 +54,35 @@ import {
 } from '../utils/contactDisplay';
 
 const TABLE_MIN_WIDTH = 2400;
+
+function AgentSelect({
+  agents,
+  value,
+  onChange,
+  className = '',
+}: {
+  agents: Agent[];
+  value: string;
+  onChange: (id: string) => void;
+  className?: string;
+}) {
+  if (!agents.length) {
+    return <span className="text-xs text-slate-500">No agents — create one in AI Agents</span>;
+  }
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className={`input-field text-xs ${className}`}
+    >
+      {agents.map((a) => (
+        <option key={a.id} value={a.id}>
+          {a.name} — {a.workflow} ({a.status})
+        </option>
+      ))}
+    </select>
+  );
+}
 
 const EMPTY_FORM = {
   firstName: '',
@@ -68,6 +100,8 @@ const EMPTY_FORM = {
 };
 
 export function Contacts() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [stats, setStats] = useState({ total: 0, withTags: 0, called: 0, autoCallOnTag: false, triggerTag: 'call-now' });
   const [config, setConfig] = useState<ContactsConfig>({ autoCallOnTag: false, callTriggerTag: 'call-now' });
@@ -96,11 +130,14 @@ export function Contacts() {
   const [bulkWorking, setBulkWorking] = useState(false);
   const [campaignTags, setCampaignTags] = useState<string[]>([]);
   const [campaignCalling, setCampaignCalling] = useState(false);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [selectedAgentId, setSelectedAgentId] = useState('');
+  const [callModalContact, setCallModalContact] = useState<Contact | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [list, all, tagsRes, s, c] = await Promise.all([
+      const [list, all, tagsRes, s, c, agentsData] = await Promise.all([
         getContacts({
           search: search || undefined,
           tag: tagFilter || undefined,
@@ -113,6 +150,7 @@ export function Contacts() {
         getContactTags(),
         getContactsStats(),
         getContactsConfig(),
+        getAgents(),
       ]);
       setContacts(list.contacts);
       setTotal(list.total);
@@ -122,6 +160,11 @@ export function Contacts() {
       setAllTags(tagsRes.tags);
       setStats(s);
       setConfig(c);
+      setAgents(agentsData.agents);
+      setSelectedAgentId((prev) => {
+        if (prev && agentsData.agents.some((a) => a.id === prev)) return prev;
+        return agentsData.publishedId || agentsData.agents[0]?.id || '';
+      });
       setSelectedIds((prev) => {
         const visible = new Set(list.contacts.map((x) => x.id));
         const next = new Set([...prev].filter((id) => visible.has(id)));
@@ -143,6 +186,13 @@ export function Contacts() {
   useEffect(() => {
     setPage(1);
   }, [search, tagFilter, filterField, filterValue, pageSize]);
+
+  useEffect(() => {
+    const denied = (location.state as { accessDenied?: boolean } | null)?.accessDenied;
+    if (!denied) return;
+    setMessage('That page is admin-only. You have member access to Contacts, Conversations, and outreach tools.');
+    navigate(location.pathname, { replace: true, state: null });
+  }, [location.pathname, location.state, navigate]);
 
   const campaignMatchCount = useMemo(() => {
     if (!campaignTags.length) return 0;
@@ -239,13 +289,16 @@ export function Contacts() {
     }
   };
 
+  const selectedAgent = agents.find((a) => a.id === selectedAgentId);
+
   const handleCallSelected = async () => {
     if (!selectedIds.size) return;
-    if (!window.confirm(`Queue AI calls for ${selectedIds.size} selected contact(s)?`)) return;
+    const agentLabel = selectedAgent?.name ?? 'default agent';
+    if (!window.confirm(`Queue AI calls for ${selectedIds.size} contact(s) using ${agentLabel}?`)) return;
     setBulkWorking(true);
     setError('');
     try {
-      const result = await callSelectedContacts([...selectedIds]);
+      const result = await callSelectedContacts([...selectedIds], selectedAgentId || undefined);
       setMessage(
         `Calls: ${result.placed} placed, ${result.queued} queued, ${result.skipped} skipped` +
           (result.errors.length ? ` (${result.errors.length} errors)` : '')
@@ -263,13 +316,18 @@ export function Contacts() {
       setError('Select at least one tag for the campaign.');
       return;
     }
-    if (!window.confirm(`Run AI calls for ${campaignMatchCount} contact(s) with tag(s): ${campaignTags.join(', ')}?`)) {
+    const agentLabel = selectedAgent?.name ?? 'default agent';
+    if (
+      !window.confirm(
+        `Run AI calls for ${campaignMatchCount} contact(s) with tag(s): ${campaignTags.join(', ')} using ${agentLabel}?`
+      )
+    ) {
       return;
     }
     setCampaignCalling(true);
     setError('');
     try {
-      const result = await callContactsByTags(campaignTags);
+      const result = await callContactsByTags(campaignTags, selectedAgentId || undefined);
       setMessage(
         `Tag campaign: ${result.placed} placed, ${result.queued} queued, ${result.skipped} skipped` +
           (result.errors.length ? ` (${result.errors.length} errors)` : '')
@@ -291,16 +349,23 @@ export function Contacts() {
     }
   };
 
-  const handleCall = async (contact: Contact) => {
+  const openCallModal = (contact: Contact) => {
     if (contact.dnd) {
       setError('Contact is on DND — calls are disabled.');
       return;
     }
-    setCallingId(contact.id);
+    setError('');
+    setCallModalContact(contact);
+  };
+
+  const handleConfirmCall = async () => {
+    if (!callModalContact) return;
+    setCallingId(callModalContact.id);
     setError('');
     try {
-      const result = await callContact(contact.id);
+      const result = await callContact(callModalContact.id, selectedAgentId || undefined);
       setMessage(result.message);
+      setCallModalContact(null);
       await load();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Call failed');
@@ -450,9 +515,18 @@ export function Contacts() {
                 ? `${campaignMatchCount} contact(s) match selected tag(s)`
                 : 'Select tags above'}
             </span>
+            <div className="flex items-center gap-2">
+              <Bot className="h-3.5 w-3.5 text-slate-500" />
+              <AgentSelect
+                agents={agents}
+                value={selectedAgentId}
+                onChange={setSelectedAgentId}
+                className="min-w-[220px]"
+              />
+            </div>
             <button
               onClick={handleCallByTags}
-              disabled={!campaignTags.length || !campaignMatchCount || campaignCalling}
+              disabled={!campaignTags.length || !campaignMatchCount || campaignCalling || !agents.length}
               className="btn-primary text-xs"
             >
               {campaignCalling ? (
@@ -511,7 +585,16 @@ export function Contacts() {
               {bulkWorking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Tag className="h-3.5 w-3.5" />}
               Add tag to selected
             </button>
-            <button onClick={handleCallSelected} disabled={bulkWorking} className="btn-primary text-xs">
+            <div className="flex items-center gap-2">
+              <Bot className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+              <AgentSelect
+                agents={agents}
+                value={selectedAgentId}
+                onChange={setSelectedAgentId}
+                className="min-w-[200px]"
+              />
+            </div>
+            <button onClick={handleCallSelected} disabled={bulkWorking || !agents.length} className="btn-primary text-xs">
               {bulkWorking ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Phone className="h-3.5 w-3.5" />}
               Call selected
             </button>
@@ -601,7 +684,19 @@ export function Contacts() {
                           className="rounded border-white/20"
                         />
                       </td>
-                      <td className="whitespace-nowrap px-3 py-2.5 text-white">{c.firstName || '—'}</td>
+                      <td className="whitespace-nowrap px-3 py-2.5">
+                        {c.firstName ? (
+                          <Link
+                            to={`/conversations/${c.id}`}
+                            className="font-medium text-accent-cyan transition hover:text-accent-cyan/80 hover:underline"
+                            title="View profile & conversations"
+                          >
+                            {c.firstName}
+                          </Link>
+                        ) : (
+                          <span className="text-white">—</span>
+                        )}
+                      </td>
                       <td className="whitespace-nowrap px-3 py-2.5 text-slate-300">{c.middleName || '—'}</td>
                       <td className="whitespace-nowrap px-3 py-2.5 text-white">{c.lastName || '—'}</td>
                       <td className="whitespace-nowrap px-3 py-2.5 font-mono text-xs text-slate-400">{c.id}</td>
@@ -653,7 +748,7 @@ export function Contacts() {
                       <td className="sticky right-0 z-10 bg-surface-900/95 px-3 py-2.5">
                         <div className="flex justify-end gap-1">
                           <button
-                            onClick={() => handleCall(c)}
+                            onClick={() => openCallModal(c)}
                             disabled={callingId === c.id || c.dnd}
                             className="rounded-lg bg-accent-emerald/15 p-2 text-accent-emerald hover:bg-accent-emerald/25 disabled:opacity-40"
                             title={c.dnd ? 'DND enabled' : 'Call now'}
@@ -771,6 +866,78 @@ export function Contacts() {
             }}
             onError={setError}
           />
+        )}
+
+        {callModalContact && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+            onClick={() => !callingId && setCallModalContact(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 12 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 12 }}
+              className="glass-card w-full max-w-md p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-5 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white">Call contact</h3>
+                <button
+                  onClick={() => setCallModalContact(null)}
+                  disabled={!!callingId}
+                  className="text-slate-400 hover:text-white disabled:opacity-40"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              <p className="mb-4 text-sm text-slate-400">
+                Calling{' '}
+                <span className="font-medium text-white">{displayName(callModalContact)}</span>
+                {' · '}
+                <span className="font-mono text-accent-cyan">{callModalContact.phone}</span>
+              </p>
+
+              <label className="mb-1.5 flex items-center gap-2 text-xs font-medium uppercase tracking-wider text-slate-500">
+                <Bot className="h-3.5 w-3.5" />
+                AI agent
+              </label>
+              <AgentSelect
+                agents={agents}
+                value={selectedAgentId}
+                onChange={setSelectedAgentId}
+                className="mb-4 w-full text-sm"
+              />
+              {selectedAgent && (
+                <p className="mb-4 rounded-lg bg-white/5 px-3 py-2 text-xs text-slate-400">
+                  Workflow: <span className="text-slate-300">{selectedAgent.workflow}</span>
+                  {' · '}
+                  Voice: <span className="text-slate-300">{selectedAgent.tts}</span>
+                  {' · '}
+                  Status:{' '}
+                  <span className={selectedAgent.status === 'published' ? 'text-accent-emerald' : 'text-amber-400'}>
+                    {selectedAgent.status}
+                  </span>
+                </p>
+              )}
+
+              <button
+                onClick={handleConfirmCall}
+                disabled={!!callingId || !agents.length}
+                className="btn-primary w-full"
+              >
+                {callingId === callModalContact.id ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Phone className="h-4 w-4" />
+                )}
+                {callingId === callModalContact.id ? 'Calling…' : 'Start AI call'}
+              </button>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Bell, ChevronDown, LogOut, RefreshCw, Search, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, ChevronDown, LogOut, Palette, RefreshCw, Search, User } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { LAGNAA_UPDATES, type LagnaaUpdate } from '../../data/lagnaaUpdates';
 import { ProfilePanel } from './ProfilePanel';
@@ -12,6 +13,7 @@ interface HeaderProps {
 }
 
 export function Header({ title, subtitle, onRefresh, actions }: HeaderProps) {
+  const navigate = useNavigate();
   const { user, logout, initials } = useAuth();
   const [showNotif, setShowNotif] = useState(false);
   const [showUser, setShowUser] = useState(false);
@@ -46,7 +48,7 @@ export function Header({ title, subtitle, onRefresh, actions }: HeaderProps) {
   );
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/5 bg-surface-950/80 px-8 py-4 backdrop-blur-xl">
+    <header className="theme-header sticky top-0 z-30 border-b border-white/5 bg-surface-950/80 px-8 py-4 backdrop-blur-xl">
       <div className="flex items-center justify-between">
         <div>
           {subtitle && (
@@ -131,6 +133,16 @@ export function Header({ title, subtitle, onRefresh, actions }: HeaderProps) {
                 >
                   <User className="h-4 w-4" />
                   Profile
+                </button>
+                <button
+                  onClick={() => {
+                    setShowUser(false);
+                    navigate('/settings/appearance');
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-white"
+                >
+                  <Palette className="h-4 w-4" />
+                  Appearance
                 </button>
                 <button
                   onClick={logout}

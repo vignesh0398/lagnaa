@@ -24,6 +24,7 @@ import socialStudioRoutes from './routes/socialStudio.js';
 import contactsRoutes from './routes/contacts.js';
 import prospectsRoutes from './routes/prospects.js';
 import mapsLeadsRoutes from './routes/mapsLeads.js';
+import newsRoutes from './routes/news.js';
 import { getWebhookBaseUrl, startTunnel } from './tunnel.js';
 
 const app = express();
@@ -65,6 +66,7 @@ app.use('/api/social', socialStudioRoutes);
 app.use('/api/contacts', contactsRoutes);
 app.use('/api/prospects', prospectsRoutes);
 app.use('/api/maps-leads', mapsLeadsRoutes);
+app.use('/api/news', newsRoutes);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distPath = path.join(__dirname, '..', 'dist');

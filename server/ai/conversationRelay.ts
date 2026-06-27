@@ -17,9 +17,7 @@ import { syncOutcomeToGhl } from '../ghlSync.js';
 import { loadTwilioConfig } from '../config.js';
 import { splitIntoSpeakPhrases } from './speechHumanizer.js';
 import { getRelayWebSocketUrl } from '../tunnel.js';
-
-const MAX_NO_SPEECH_RETRIES = 3;
-const LISTEN_TIMEOUT_SEC = 22;
+import { CLIENT_SILENCE_TIMEOUT_SEC } from './voiceStack.js';
 
 type RelaySocket = WebSocket & { callSid?: string; silenceTimer?: ReturnType<typeof setTimeout> };
 
@@ -72,7 +70,7 @@ function armSilenceTimer(ws: RelaySocket, session: CallSession): void {
   clearSilenceTimer(ws);
   ws.silenceTimer = setTimeout(() => {
     void handleNoSpeech(ws, session);
-  }, LISTEN_TIMEOUT_SEC * 1000);
+  }, CLIENT_SILENCE_TIMEOUT_SEC * 1000);
 }
 
 function finalizeVoicemail(callSid: string, session: CallSession, source: 'amd' | 'speech'): void {
@@ -129,18 +127,12 @@ async function handleEnd(ws: RelaySocket, session: CallSession, say: string, out
 
 async function handleNoSpeech(ws: RelaySocket, session: CallSession): Promise<void> {
   session.noSpeechRetries += 1;
-  console.log(`[Relay] No speech ${session.callSid} retries=${session.noSpeechRetries}`);
+  console.log(
+    `[Relay] Client silent ${CLIENT_SILENCE_TIMEOUT_SEC}s — ending ${session.callSid} retries=${session.noSpeechRetries}`
+  );
 
-  if (session.noSpeechRetries >= MAX_NO_SPEECH_RETRIES) {
-    const msg = 'I am having trouble hearing you. Thank you for your time. Goodbye.';
-    await handleEnd(ws, session, msg, 'No Response');
-    return;
-  }
-
-  const reprompt = session.scripts.noSpeechRetry;
-  addMessage(session.callSid, 'assistant', reprompt);
-  speak(ws, reprompt);
-  armSilenceTimer(ws, session);
+  const msg = 'Thank you for your time. Goodbye.';
+  await handleEnd(ws, session, msg, 'No Response');
 }
 
 async function handlePrompt(ws: RelaySocket, session: CallSession, speech: string): Promise<void> {

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   AlertCircle,
   Loader2,
@@ -11,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { EmptyState } from '../components/ui/EmptyState';
+import { ContactProfileDetails } from '../components/contacts/ContactProfileDetails';
 import {
   getContactConversations,
   getContacts,
@@ -33,9 +35,12 @@ const CHANNEL_COLOR = {
 } as const;
 
 export function Conversations() {
+  const { contactId: routeContactId } = useParams();
+  const navigate = useNavigate();
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [search, setSearch] = useState('');
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(routeContactId ?? null);
+  const [activeContact, setActiveContact] = useState<Contact | null>(null);
   const [conversations, setConversations] = useState<ContactConversation[]>([]);
   const [selectedConvoId, setSelectedConvoId] = useState<string | null>(null);
   const [loadingContacts, setLoadingContacts] = useState(true);
@@ -60,10 +65,16 @@ export function Conversations() {
     setError('');
     try {
       const data = await getContactConversations(contactId);
-      setContacts((prev) => prev.map((c) => (c.id === data.contact.id ? data.contact : c)));
+      setActiveContact(data.contact);
+      setContacts((prev) => {
+        const exists = prev.some((c) => c.id === data.contact.id);
+        if (!exists) return [...prev, data.contact];
+        return prev.map((c) => (c.id === data.contact.id ? data.contact : c));
+      });
       setConversations(data.conversations);
       setSelectedConvoId(data.conversations[0]?.id ?? null);
     } catch {
+      setActiveContact(null);
       setConversations([]);
       setSelectedConvoId(null);
       setError('Failed to load conversations');
@@ -77,12 +88,23 @@ export function Conversations() {
   }, [loadContacts]);
 
   useEffect(() => {
-    if (!selectedId && contacts.length) setSelectedId(contacts[0].id);
-  }, [contacts, selectedId]);
+    if (routeContactId) {
+      setSelectedId(routeContactId);
+      return;
+    }
+    if (contacts.length) {
+      navigate(`/conversations/${contacts[0].id}`, { replace: true });
+    }
+  }, [routeContactId, contacts, navigate]);
 
   useEffect(() => {
     if (selectedId) void loadConversations(selectedId);
   }, [selectedId, loadConversations]);
+
+  const selectContact = (id: string) => {
+    setSelectedId(id);
+    navigate(`/conversations/${id}`);
+  };
 
   const filteredContacts = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -96,7 +118,9 @@ export function Conversations() {
     );
   }, [contacts, search]);
 
-  const selectedContact = contacts.find((c) => c.id === selectedId);
+  const selectedContact =
+    (selectedId && activeContact?.id === selectedId ? activeContact : null) ??
+    contacts.find((c) => c.id === selectedId);
   const selectedConvo = conversations.find((c) => c.id === selectedConvoId);
 
   const toggleDnd = async () => {
@@ -104,6 +128,7 @@ export function Conversations() {
     setDndSaving(true);
     try {
       const res = await setContactDnd(selectedContact.id, !selectedContact.dnd);
+      setActiveContact(res.contact);
       setContacts((prev) => prev.map((c) => (c.id === res.contact.id ? res.contact : c)));
     } catch {
       setError('Could not update DND');
@@ -144,7 +169,7 @@ export function Conversations() {
                   <button
                     key={c.id}
                     type="button"
-                    onClick={() => setSelectedId(c.id)}
+                    onClick={() => selectContact(c.id)}
                     className={`flex w-full items-start gap-3 border-b border-white/5 px-4 py-3 text-left transition ${
                       active ? 'bg-accent-cyan/10' : 'hover:bg-white/[0.03]'
                     }`}
@@ -172,13 +197,21 @@ export function Conversations() {
 
         {/* Conversation panel */}
         <div className="glass-card flex min-w-0 flex-1 flex-col overflow-hidden rounded-l-none">
-          {!selectedContact ? (
+          {!selectedContact && !loadingConversations ? (
             <EmptyState
               icon={MessageCircle}
-              title="Select a contact"
-              description="Choose a contact on the left to view their conversation history across voice, WhatsApp, and email."
+              title={routeContactId ? 'Contact not found' : 'Select a contact'}
+              description={
+                routeContactId
+                  ? 'This contact may have been deleted. Pick another contact from the list.'
+                  : 'Choose a contact on the left to view their profile and conversation history across voice, WhatsApp, and email.'
+              }
             />
-          ) : (
+          ) : loadingConversations && !selectedContact ? (
+            <div className="flex flex-1 items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-accent-cyan" />
+            </div>
+          ) : selectedContact ? (
             <>
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
                 <div>
@@ -203,6 +236,8 @@ export function Conversations() {
                   {selectedContact.dnd ? 'DND on — tap to disable' : 'Enable DND'}
                 </button>
               </div>
+
+              <ContactProfileDetails contact={selectedContact} />
 
               {selectedContact.dnd && (
                 <div className="flex items-center gap-2 border-b border-red-500/20 bg-red-500/10 px-5 py-2 text-xs text-red-200">
@@ -302,7 +337,7 @@ export function Conversations() {
                 </div>
               </div>
             </>
-          )}
+          ) : null}
         </div>
       </div>
     </div>

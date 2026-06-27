@@ -49,7 +49,7 @@ export function Login() {
     setLoading(true);
     setError('');
     try {
-      const user = await loginTeam(email, password);
+      const user = await loginTeam(email.trim(), password.trim());
       localStorage.setItem('datacrew_user', JSON.stringify(user));
       setSuccess(true);
       setTimeout(() => navigate('/home'), 900);
@@ -61,7 +61,7 @@ export function Login() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-surface-950" style={{ perspective: 1200 }}>
+    <div className="theme-page-bg relative flex min-h-screen items-center justify-center overflow-hidden bg-surface-950 bg-mesh" style={{ perspective: 1200 }}>
       <div className="absolute inset-0 bg-mesh" />
       <FloatingOrb className="left-1/4 top-1/4 h-72 w-72 bg-accent-cyan/20" delay={0} />
       <FloatingOrb className="right-1/4 bottom-1/4 h-96 w-96 bg-accent-violet/15" delay={2} />

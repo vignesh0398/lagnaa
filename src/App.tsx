@@ -1,5 +1,8 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from './components/layout/AppLayout';
+import { RoleGuard } from './components/layout/RoleGuard';
+import { AppearanceProvider } from './hooks/useAppearance';
+import { AppearanceSettings } from './pages/AppearanceSettings';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Agents } from './pages/Agents';
@@ -34,42 +37,48 @@ import { HomeHub } from './pages/HomeHub';
 export default function App() {
   return (
     <BrowserRouter>
+      <AppearanceProvider>
       <Routes>
         <Route path="/" element={<Login />} />
         <Route element={<AppLayout />}>
-          <Route path="/home" element={<HomeHub />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/contacts" element={<Contacts />} />
-          <Route path="/prospects" element={<ProspectFinder />} />
-          <Route path="/maps-leads" element={<MapsLeadFinder />} />
-          <Route path="/conversations" element={<Conversations />} />
-          <Route path="/agents" element={<Agents />} />
-          <Route path="/calls" element={<CallHistory />} />
-          <Route path="/security" element={<SecurityScans />} />
-          <Route path="/prompts" element={<PromptLibrary />} />
-          <Route path="/knowledge" element={<KnowledgeBasePage />} />
-          <Route path="/team" element={<Team />} />
+          <Route element={<RoleGuard />}>
+            <Route path="/settings/appearance" element={<AppearanceSettings />} />
+            <Route path="/home" element={<HomeHub />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/contacts" element={<Contacts />} />
+            <Route path="/prospects" element={<ProspectFinder />} />
+            <Route path="/maps-leads" element={<MapsLeadFinder />} />
+            <Route path="/conversations" element={<Conversations />} />
+            <Route path="/conversations/:contactId" element={<Conversations />} />
+            <Route path="/agents" element={<Agents />} />
+            <Route path="/calls" element={<CallHistory />} />
+            <Route path="/security" element={<SecurityScans />} />
+            <Route path="/prompts" element={<PromptLibrary />} />
+            <Route path="/knowledge" element={<KnowledgeBasePage />} />
+            <Route path="/team" element={<Team />} />
 
-          <Route path="/gateway" element={<Gateway />} />
-          <Route path="/whatsapp" element={<WhatsAppCampaignPage />} />
-          <Route path="/whatsapp/chats" element={<WhatsAppChatHistory />} />
-          <Route path="/email" element={<EmailCampaignPage />} />
-          <Route path="/email/chats" element={<EmailChatHistory />} />
-          <Route path="/analytics" element={<AnalyticsHub />} />
-          <Route path="/integrations" element={<ApiWebhooks />} />
-          <Route path="/billing" element={<BillingUsage />} />
-          <Route path="/ghl" element={<GoHighLevel />} />
-          <Route path="/marketing/seo" element={<SeoMarketing />} />
-          <Route path="/marketing/competitors" element={<CompetitorCompare />} />
-          <Route path="/marketing/studio" element={<SocialStudio />} />
-          <Route path="/marketing/social" element={<SocialPreview />} />
-          <Route path="/marketing/local" element={<LocalSeo />} />
-          <Route path="/marketing/roadmap" element={<MarketingRoadmap />} />
-          <Route path="/marketing/white-label" element={<WhiteLabelSettings />} />
-          <Route path="/seo" element={<Navigate to="/marketing/seo" replace />} />
+            <Route path="/gateway" element={<Gateway />} />
+            <Route path="/whatsapp" element={<WhatsAppCampaignPage />} />
+            <Route path="/whatsapp/chats" element={<WhatsAppChatHistory />} />
+            <Route path="/email" element={<EmailCampaignPage />} />
+            <Route path="/email/chats" element={<EmailChatHistory />} />
+            <Route path="/analytics" element={<AnalyticsHub />} />
+            <Route path="/integrations" element={<ApiWebhooks />} />
+            <Route path="/billing" element={<BillingUsage />} />
+            <Route path="/ghl" element={<GoHighLevel />} />
+            <Route path="/marketing/seo" element={<SeoMarketing />} />
+            <Route path="/marketing/competitors" element={<CompetitorCompare />} />
+            <Route path="/marketing/studio" element={<SocialStudio />} />
+            <Route path="/marketing/social" element={<SocialPreview />} />
+            <Route path="/marketing/local" element={<LocalSeo />} />
+            <Route path="/marketing/roadmap" element={<MarketingRoadmap />} />
+            <Route path="/marketing/white-label" element={<WhiteLabelSettings />} />
+            <Route path="/seo" element={<Navigate to="/marketing/seo" replace />} />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </AppearanceProvider>
     </BrowserRouter>
   );
 }

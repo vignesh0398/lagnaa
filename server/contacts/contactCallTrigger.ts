@@ -19,7 +19,8 @@ function shouldTrigger(tags: string[], triggerTag: string): boolean {
 
 export async function triggerCallForContact(
   contactId: string,
-  source = 'contact_manual'
+  source = 'contact_manual',
+  agentId?: string
 ): Promise<{ ok: boolean; message: string; callSid?: string; queued?: boolean }> {
   const contact = getContactById(contactId);
   if (!contact) return { ok: false, message: 'Contact not found' };
@@ -34,6 +35,7 @@ export async function triggerCallForContact(
     const result = await scheduleOutboundCall(
       {
         to: contact.phone,
+        agentId,
         clientName: contact.name,
         clientDob: contact.dob,
         clientPostcode: contact.postcode,
@@ -81,15 +83,17 @@ export interface BulkCallResult {
 
 export async function callContactsByIds(
   contactIds: string[],
-  source = 'contact_bulk'
+  source = 'contact_bulk',
+  agentId?: string
 ): Promise<BulkCallResult> {
   const contacts = getContactsByIds(contactIds).filter((c) => c.phone?.trim() && !c.dnd);
-  return runBulkCalls(contacts, source);
+  return runBulkCalls(contacts, source, agentId);
 }
 
 export async function callContactsByTags(
   tags: string[],
-  source = 'contact_tag_campaign'
+  source = 'contact_tag_campaign',
+  agentId?: string
 ): Promise<BulkCallResult> {
   const wanted = tags.map((t) => t.trim().toLowerCase()).filter(Boolean);
   if (!wanted.length) {
@@ -101,17 +105,18 @@ export async function callContactsByTags(
       !c.dnd &&
       wanted.some((t) => c.tags.some((x) => x.toLowerCase() === t))
   );
-  return runBulkCalls(contacts, source);
+  return runBulkCalls(contacts, source, agentId);
 }
 
 async function runBulkCalls(
   contacts: ReturnType<typeof getContactsByIds>,
-  source: string
+  source: string,
+  agentId?: string
 ): Promise<BulkCallResult> {
   const result: BulkCallResult = { total: contacts.length, placed: 0, queued: 0, skipped: 0, errors: [] };
 
   for (const contact of contacts) {
-    const call = await triggerCallForContact(contact.id, source);
+    const call = await triggerCallForContact(contact.id, source, agentId);
     if (call.ok) {
       if (call.queued) result.queued += 1;
       else result.placed += 1;

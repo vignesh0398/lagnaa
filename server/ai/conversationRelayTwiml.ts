@@ -27,9 +27,9 @@ function connectActionUrl(): string {
   return `${base}/api/twilio/voice/relay-end`;
 }
 
-export function buildConversationRelayTwiml(hello: string, toNumber?: string): string {
+export function buildConversationRelayTwiml(hello: string, toNumber?: string, agentId?: string): string {
   const wsUrl = relayUrl();
-  const voice = getConversationRelayVoice(getVoiceId());
+  const voice = getConversationRelayVoice(getVoiceId(agentId));
   const lang = getSpeechLanguage(toNumber);
 
   return `<?xml version="1.0" encoding="UTF-8"?>

@@ -10,8 +10,10 @@ import {
   Wind,
 } from 'lucide-react';
 import { LagnaaLogo } from '../components/brand/LagnaaLogo';
+import { TechNewsFeed } from '../components/home/TechNewsFeed';
 import { useAuth } from '../hooks/useAuth';
 import { LAGNAA_UPDATES, QUICK_DESTINATIONS } from '../data/lagnaaUpdates';
+import { canAccessPath } from '../utils/roleAccess';
 
 function FloatingOrb({ className, delay }: { className: string; delay: number }) {
   return (
@@ -36,6 +38,10 @@ export function HomeHub() {
   const [breathPhase, setBreathPhase] = useState<'inhale' | 'hold' | 'exhale'>('inhale');
 
   const firstName = useMemo(() => user?.name?.split(' ')[0] ?? 'there', [user?.name]);
+  const quickDestinations = useMemo(
+    () => QUICK_DESTINATIONS.filter((dest) => canAccessPath(user, dest.to)),
+    [user]
+  );
   const newUpdates = LAGNAA_UPDATES.filter((u) => u.section === 'new');
   const soonUpdates = LAGNAA_UPDATES.filter((u) => u.section === 'soon');
 
@@ -121,6 +127,15 @@ export function HomeHub() {
           )}
         </AnimatePresence>
 
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12, duration: 0.6 }}
+          className="mb-10"
+        >
+          <TechNewsFeed />
+        </motion.div>
+
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -132,7 +147,7 @@ export function HomeHub() {
             Where would you like to go?
           </h2>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {QUICK_DESTINATIONS.map((dest, i) => (
+            {quickDestinations.map((dest, i) => (
               <motion.div
                 key={dest.to}
                 initial={{ opacity: 0, y: 12 }}

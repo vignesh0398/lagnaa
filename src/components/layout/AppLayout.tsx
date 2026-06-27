@@ -13,7 +13,7 @@ export function AppLayout() {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-mesh">
+    <div className="theme-page-bg min-h-screen bg-mesh">
       <Sidebar />
       <main className="ml-64 min-h-screen">
         <Outlet />

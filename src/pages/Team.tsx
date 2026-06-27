@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertCircle, CheckCircle2, Loader2, Plus, Shield, Trash2, UserPlus, Users } from 'lucide-react';
+import { AlertCircle, CheckCircle2, KeyRound, Loader2, Plus, Shield, Trash2, UserPlus, Users, X } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { StatCard } from '../components/ui/StatCard';
 import {
@@ -10,6 +10,7 @@ import {
   updateTeamMember,
   type TeamMember,
 } from '../api/team';
+import { MEMBER_ACCESS_SUMMARY } from '../utils/roleAccess';
 
 export function Team() {
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -23,6 +24,8 @@ export function Team() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState<'admin' | 'member'>('member');
+  const [resetMember, setResetMember] = useState<TeamMember | null>(null);
+  const [resetPassword, setResetPassword] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -40,12 +43,24 @@ export function Team() {
   }, [load]);
 
   const handleAdd = async () => {
-    if (!name.trim() || !email.trim() || !password.trim()) return;
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    if (!trimmedName || !trimmedEmail || !trimmedPassword) {
+      setError('Name, email, and password are required.');
+      return;
+    }
+    if (trimmedPassword.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
     setSaving(true);
     setError('');
     try {
-      await addTeamMember({ name, email, password, role });
-      setSuccess(`${name} added to the team.`);
+      await addTeamMember({ name: trimmedName, email: trimmedEmail, password: trimmedPassword, role });
+      setSuccess(
+        `${trimmedName} can now sign in with ${trimmedEmail.toLowerCase()} at the same site URL you use (localhost or lagnaa.onrender.com).`
+      );
       setName('');
       setEmail('');
       setPassword('');
@@ -64,6 +79,28 @@ export function Team() {
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Update failed');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!resetMember) return;
+    const trimmedPassword = resetPassword.trim();
+    if (trimmedPassword.length < 6) {
+      setError('New password must be at least 6 characters.');
+      return;
+    }
+    setSaving(true);
+    setError('');
+    try {
+      await updateTeamMember(resetMember.id, { password: trimmedPassword });
+      setSuccess(`Password reset for ${resetMember.name}. They can sign in with ${resetMember.email} now.`);
+      setResetMember(null);
+      setResetPassword('');
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Password reset failed');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -90,6 +127,12 @@ export function Team() {
           <p className="text-sm text-accent-cyan/90">
             You are on the <strong>Admin</strong> panel. Add sub-accounts so your team can log in and work together on calls, prompts, and history.
           </p>
+          <p className="mt-2 text-xs text-slate-400">
+            Team accounts only work on the <strong className="text-slate-300">same site URL</strong> where you created them
+            (e.g. <span className="font-mono text-accent-cyan/80">lagnaa.onrender.com</span> vs localhost). If someone cannot sign in, use{' '}
+            <strong className="text-slate-300">Reset password</strong> below and share the new password.
+          </p>
+          <p className="mt-2 text-xs text-slate-500">{MEMBER_ACCESS_SUMMARY}</p>
         </div>
 
         {loading ? (
@@ -160,6 +203,17 @@ export function Team() {
                   <div className="flex gap-2">
                     {member.role !== 'admin' && (
                       <>
+                        <button
+                          onClick={() => {
+                            setResetMember(member);
+                            setResetPassword('');
+                            setError('');
+                          }}
+                          className="btn-secondary text-xs"
+                        >
+                          <KeyRound className="h-3.5 w-3.5" />
+                          Reset password
+                        </button>
                         <button onClick={() => toggleActive(member)} className="btn-secondary text-xs">
                           {member.active ? 'Deactivate' : 'Activate'}
                         </button>
@@ -184,6 +238,51 @@ export function Team() {
           <p className="flex items-center gap-2 text-sm text-accent-emerald">
             <CheckCircle2 className="h-4 w-4" />{success}
           </p>
+        )}
+
+        {resetMember && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+            <div className="glass-card w-full max-w-md p-6">
+              <div className="mb-4 flex items-center justify-between">
+                <h3 className="text-lg font-bold text-white">Reset password</h3>
+                <button
+                  onClick={() => {
+                    setResetMember(null);
+                    setResetPassword('');
+                  }}
+                  className="text-slate-400 hover:text-white"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="mb-4 text-sm text-slate-400">
+                Set a new password for <span className="text-white">{resetMember.name}</span> ({resetMember.email})
+              </p>
+              <input
+                type="password"
+                value={resetPassword}
+                onChange={(e) => setResetPassword(e.target.value)}
+                placeholder="New password (min 6 characters)"
+                className="input-field mb-4"
+                autoFocus
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setResetMember(null);
+                    setResetPassword('');
+                  }}
+                  className="btn-secondary"
+                >
+                  Cancel
+                </button>
+                <button onClick={handleResetPassword} disabled={saving} className="btn-primary">
+                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+                  Save password
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

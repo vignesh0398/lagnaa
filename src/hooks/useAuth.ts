@@ -37,5 +37,7 @@ export function useAuth() {
         .toUpperCase()
     : 'DC';
 
-  return { user, logout, updateUser, initials, isLoggedIn: !!user };
+  const isAdmin = user?.role === 'admin';
+
+  return { user, logout, updateUser, initials, isLoggedIn: !!user, isAdmin };
 }

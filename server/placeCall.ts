@@ -1,11 +1,23 @@
-import { NoPublishedPromptError, getPublishedPrompt } from './ai/promptStore.js';
+import { NoPublishedPromptError, getPromptById, getPublishedPrompt, type CallFlowPrompt } from './ai/promptStore.js';
 import { buildOutboundTwiml } from './ai/twiml.js';
 import { getDefaultFromNumber, getTwilioClient } from './twilioClient.js';
 import { getWebhookBaseUrl } from './tunnel.js';
 
+function resolvePrompt(agentId?: string): CallFlowPrompt {
+  if (agentId) {
+    const prompt = getPromptById(agentId);
+    if (!prompt) throw new Error('Selected AI agent was not found.');
+    return prompt;
+  }
+  const published = getPublishedPrompt();
+  if (!published) throw new NoPublishedPromptError();
+  return published;
+}
+
 export interface PlaceCallOptions {
   to: string;
   from?: string;
+  agentId?: string;
   agentName?: string;
   aiVoice?: boolean;
   clientName?: string;
@@ -29,15 +41,10 @@ export async function placeOutboundCall(options: PlaceCallOptions): Promise<Plac
     throw new Error('Twilio not configured. Connect in Connections first.');
   }
 
-  const published = getPublishedPrompt();
-  if (!published) {
-    throw new NoPublishedPromptError();
-  }
-
   const {
     to,
     from,
-    agentName = published.agentName,
+    agentId,
     aiVoice = true,
     clientName = 'the client',
     clientDob,
@@ -45,6 +52,9 @@ export async function placeOutboundCall(options: PlaceCallOptions): Promise<Plac
     ghlContactId,
     contactId,
   } = options;
+
+  const prompt = resolvePrompt(agentId);
+  const agentName = options.agentName ?? prompt.agentName;
 
   const fromNumber = from || getDefaultFromNumber();
   if (!fromNumber) {
@@ -74,6 +84,7 @@ export async function placeOutboundCall(options: PlaceCallOptions): Promise<Plac
       agentName,
       clientName,
       to,
+      promptId: prompt.id,
     });
     if (clientDob) params.set('clientDob', clientDob);
     if (clientPostcode) params.set('clientPostcode', clientPostcode);

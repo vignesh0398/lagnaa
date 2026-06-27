@@ -1,6 +1,6 @@
 import type { CallFlowScripts } from './promptStore.js';
 import { buildKnowledgeContext, getActiveKnowledgeBase } from './knowledgeStore.js';
-import { getActivePrompt } from './promptStore.js';
+import { getActivePrompt, getPromptById } from './promptStore.js';
 
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
@@ -73,9 +73,10 @@ export function initSession(
   expectedPostcode?: string,
   toNumber?: string,
   ghlContactId?: string,
-  contactId?: string
+  contactId?: string,
+  promptId?: string
 ): CallSession {
-  const prompt = getActivePrompt();
+  const prompt = promptId ? (getPromptById(promptId) ?? getActivePrompt()) : getActivePrompt();
   const kb = getActiveKnowledgeBase();
   const session: CallSession = {
     callSid,

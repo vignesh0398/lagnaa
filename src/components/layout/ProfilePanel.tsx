@@ -10,6 +10,7 @@ import {
   KeyRound,
   Loader2,
   LogOut,
+  Palette,
   Shield,
   User,
   Users,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import { changePassword, getProfile, updateProfile } from '../../api/team';
 import { useAuth } from '../../hooks/useAuth';
+import { canAccessPath } from '../../utils/roleAccess';
 
 interface ProfilePanelProps {
   open: boolean;
@@ -359,6 +361,14 @@ export function ProfilePanel({ open, onClose }: ProfilePanelProps) {
                   <section className="glass-card space-y-2 p-3">
                     <p className="px-2 py-1 text-xs font-bold uppercase tracking-wider text-slate-500">Quick links</p>
 
+                    <button
+                      onClick={() => goTo('/settings/appearance')}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
+                    >
+                      <Palette className="h-4 w-4 text-[var(--theme-accent)]" />
+                      Appearance settings
+                    </button>
+
                     {role === 'admin' && (
                       <button
                         onClick={() => goTo('/team')}
@@ -369,21 +379,25 @@ export function ProfilePanel({ open, onClose }: ProfilePanelProps) {
                       </button>
                     )}
 
-                    <button
-                      onClick={() => goTo('/gateway')}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
-                    >
-                      <Cable className="h-4 w-4 text-accent-cyan" />
-                      Connections
-                    </button>
+                    {canAccessPath(user, '/gateway') && (
+                      <button
+                        onClick={() => goTo('/gateway')}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
+                      >
+                        <Cable className="h-4 w-4 text-accent-cyan" />
+                        Connections
+                      </button>
+                    )}
 
-                    <button
-                      onClick={() => goTo('/integrations')}
-                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
-                    >
-                      <Webhook className="h-4 w-4 text-accent-emerald" />
-                      API & Webhooks
-                    </button>
+                    {canAccessPath(user, '/integrations') && (
+                      <button
+                        onClick={() => goTo('/integrations')}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"
+                      >
+                        <Webhook className="h-4 w-4 text-accent-emerald" />
+                        API & Webhooks
+                      </button>
+                    )}
 
                     <button
                       onClick={handleLogout}

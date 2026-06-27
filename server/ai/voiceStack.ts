@@ -9,6 +9,9 @@ export const STT_MODEL = 'nova-3-general';
 export const STT_LANGUAGE = 'en-GB';
 export const STT_ENDPOINT_MS = 600;
 
+/** Hang up if the client says nothing for this long after the AI finishes speaking. */
+export const CLIENT_SILENCE_TIMEOUT_SEC = 10;
+
 export const TTS_PROVIDER = 'ElevenLabs';
 export const TTS_MODEL = 'turbo_v2_5';
 
@@ -53,7 +56,7 @@ export const DEFAULT_VOICE_ID = 'elevenlabs:emilia';
 
 export const VOICE_STACK_LABEL = {
   llm: `Groq ${GROQ_MODEL} (temp ${GROQ_TEMPERATURE}, max ${GROQ_MAX_TOKENS})`,
-  stt: `${STT_PROVIDER} ${STT_MODEL} · ${STT_LANGUAGE} · ${STT_ENDPOINT_MS}ms endpoint`,
+  stt: `${STT_PROVIDER} ${STT_MODEL} · ${STT_LANGUAGE} · ${STT_ENDPOINT_MS}ms endpoint · ${CLIENT_SILENCE_TIMEOUT_SEC}s silence hangup`,
   tts: `${TTS_PROVIDER} Emilia · ${TTS_MODEL} · young UK · emotional delivery`,
 } as const;
 

@@ -69,6 +69,7 @@ export async function generateBriefAnswer(
     agentName: string;
     clientName: string;
     step: string;
+    promptId?: string;
     behaviorRules?: string;
     knowledgeContext?: string;
     messages: { role: string; content: string }[];
@@ -76,7 +77,7 @@ export async function generateBriefAnswer(
   userQuestion: string
 ): Promise<string> {
   const apiKey = loadGroqApiKey();
-  const model = getLlmModel();
+  const model = getLlmModel(session.promptId);
   const systemPrompt = [
     INTERRUPTION_PROMPT,
     session.behaviorRules ?? '',

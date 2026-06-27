@@ -120,10 +120,10 @@ export function deleteContact(id: string) {
   return api<{ success: boolean }>(`/api/contacts/${id}`, { method: 'DELETE' });
 }
 
-export function callContact(id: string) {
+export function callContact(id: string, agentId?: string) {
   return api<{ success: boolean; message: string; callSid?: string; queued?: boolean }>(
     `/api/contacts/${id}/call`,
-    { method: 'POST' }
+    { method: 'POST', body: JSON.stringify({ agentId }) }
   );
 }
 
@@ -141,7 +141,7 @@ export function bulkAddTagsToContacts(contactIds: string[], tags: string[]) {
   );
 }
 
-export function callSelectedContacts(contactIds: string[]) {
+export function callSelectedContacts(contactIds: string[], agentId?: string) {
   return api<{
     success: boolean;
     total: number;
@@ -149,10 +149,10 @@ export function callSelectedContacts(contactIds: string[]) {
     queued: number;
     skipped: number;
     errors: string[];
-  }>('/api/contacts/bulk/call', { method: 'POST', body: JSON.stringify({ contactIds }) });
+  }>('/api/contacts/bulk/call', { method: 'POST', body: JSON.stringify({ contactIds, agentId }) });
 }
 
-export function callContactsByTags(tags: string[]) {
+export function callContactsByTags(tags: string[], agentId?: string) {
   return api<{
     success: boolean;
     total: number;
@@ -160,7 +160,7 @@ export function callContactsByTags(tags: string[]) {
     queued: number;
     skipped: number;
     errors: string[];
-  }>('/api/contacts/call-by-tags', { method: 'POST', body: JSON.stringify({ tags }) });
+  }>('/api/contacts/call-by-tags', { method: 'POST', body: JSON.stringify({ tags, agentId }) });
 }
 
 export interface ContactConversation {

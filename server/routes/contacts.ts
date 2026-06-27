@@ -133,16 +133,16 @@ router.post('/bulk/tags', async (req, res) => {
 });
 
 router.post('/bulk/call', async (req, res) => {
-  const { contactIds } = req.body as { contactIds?: string[] };
+  const { contactIds, agentId } = req.body as { contactIds?: string[]; agentId?: string };
   if (!contactIds?.length) return res.status(400).json({ error: 'Select at least one contact.' });
-  const result = await callContactsByIds(contactIds, 'contact_bulk_selected');
+  const result = await callContactsByIds(contactIds, 'contact_bulk_selected', agentId?.trim() || undefined);
   res.json({ success: true, ...result });
 });
 
 router.post('/call-by-tags', async (req, res) => {
-  const { tags } = req.body as { tags?: string[] };
+  const { tags, agentId } = req.body as { tags?: string[]; agentId?: string };
   if (!tags?.length) return res.status(400).json({ error: 'Select at least one tag.' });
-  const result = await callContactsByTags(tags, 'contact_tag_campaign');
+  const result = await callContactsByTags(tags, 'contact_tag_campaign', agentId?.trim() || undefined);
   res.json({ success: true, ...result });
 });
 
@@ -246,7 +246,8 @@ router.delete('/:id', (req, res) => {
 });
 
 router.post('/:id/call', async (req, res) => {
-  const result = await triggerCallForContact(req.params.id, 'contact_click');
+  const { agentId } = req.body as { agentId?: string };
+  const result = await triggerCallForContact(req.params.id, 'contact_click', agentId?.trim() || undefined);
   if (!result.ok) return res.status(400).json({ error: result.message });
   res.json({ success: true, ...result });
 });

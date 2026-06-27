@@ -2,6 +2,14 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --theme-accent: #22d3ee;
+  --theme-accent-2: #8b5cf6;
+  --theme-accent-3: #ec4899;
+  --theme-gradient: linear-gradient(135deg, #22d3ee 0%, #8b5cf6 50%, #ec4899 100%);
+  --theme-page-bg: #050810;
+}
+
 @layer base {
   * {
     @apply border-surface-600/50;
@@ -10,6 +18,10 @@
   body {
     @apply bg-surface-950 text-slate-200 antialiased;
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  [data-theme='light'] body {
+    @apply bg-slate-100 text-slate-800;
   }
 
   ::-webkit-scrollbar {
@@ -36,11 +48,127 @@
   }
 
   .gradient-text {
-    @apply bg-gradient-brand bg-clip-text text-transparent;
+    @apply bg-clip-text text-transparent;
+    background-image: var(--theme-gradient) !important;
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-brand px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition-[transform,box-shadow,opacity] duration-100 ease-out hover:scale-[1.01] hover:shadow-glow-violet active:scale-[0.99];
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition-[transform,box-shadow,opacity] duration-100 ease-out hover:scale-[1.01] active:scale-[0.99];
+    background-image: var(--theme-gradient);
+  }
+
+  .btn-primary:hover {
+    box-shadow: 0 0 40px -10px color-mix(in srgb, var(--theme-accent-2) 40%, transparent);
+  }
+
+  .bg-gradient-brand {
+    background-image: var(--theme-gradient) !important;
+  }
+
+  .text-accent-cyan {
+    color: var(--theme-accent) !important;
+  }
+
+  .text-accent-violet {
+    color: var(--theme-accent-2) !important;
+  }
+
+  .text-accent-pink {
+    color: var(--theme-accent-3) !important;
+  }
+
+  .border-accent-cyan\/20,
+  .border-accent-cyan\/25,
+  .border-accent-cyan\/30,
+  .border-accent-cyan\/40,
+  .border-accent-cyan\/50 {
+    border-color: color-mix(in srgb, var(--theme-accent) 35%, transparent) !important;
+  }
+
+  .bg-accent-cyan\/5,
+  .bg-accent-cyan\/10,
+  .bg-accent-cyan\/15,
+  .bg-accent-cyan\/20,
+  .bg-accent-cyan\/25 {
+    background-color: color-mix(in srgb, var(--theme-accent) 15%, transparent) !important;
+  }
+
+  .ring-accent-cyan\/25,
+  .ring-accent-cyan\/30,
+  .ring-accent-cyan\/40,
+  .ring-accent-cyan\/50 {
+    --tw-ring-color: color-mix(in srgb, var(--theme-accent) 40%, transparent) !important;
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 40px -10px color-mix(in srgb, var(--theme-accent) 35%, transparent) !important;
+  }
+
+  [data-theme='light'] .glass-card {
+    @apply border-slate-200/90 bg-white/90 text-slate-800 shadow-sm;
+  }
+
+  [data-theme='light'] .glass-card-hover:hover {
+    border-color: color-mix(in srgb, var(--theme-accent) 35%, transparent) !important;
+  }
+
+  [data-theme='light'] .input-field {
+    @apply border-slate-200 bg-white text-slate-800 placeholder:text-slate-400;
+  }
+
+  [data-theme='light'] .btn-secondary {
+    @apply border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-slate-100;
+  }
+
+  [data-theme='light'] .text-white {
+    @apply text-slate-900;
+  }
+
+  [data-theme='light'] .theme-sidebar,
+  [data-theme='light'] .theme-header {
+    @apply border-slate-200/80 bg-white/90;
+  }
+
+  [data-theme='light'] .theme-sidebar .text-slate-300,
+  [data-theme='light'] .theme-sidebar .text-slate-400 {
+    @apply text-slate-600;
+  }
+
+  [data-background='solid'] .theme-page-bg {
+    background-image: none !important;
+    background-color: var(--theme-page-bg);
+  }
+
+  [data-theme='light'][data-background='solid'] .theme-page-bg {
+    --theme-page-bg: #f1f5f9;
+  }
+
+  [data-density='compact'] .input-field {
+    @apply py-2 text-xs;
+  }
+
+  [data-density='compact'] .btn-primary {
+    @apply px-4 py-2 text-xs;
+  }
+
+  [data-density='compact'] .btn-secondary {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  [data-corners='sharp'] .glass-card,
+  [data-corners='sharp'] .btn-primary,
+  [data-corners='sharp'] .btn-secondary,
+  [data-corners='sharp'] .input-field {
+    @apply rounded-lg;
+  }
+
+  [data-motion='reduced'] *,
+  [data-motion='reduced'] *::before,
+  [data-motion='reduced'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 
   .btn-secondary {

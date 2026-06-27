@@ -20,9 +20,9 @@ import { isTwilioMachineAnswer, isVoicemailSpeech } from '../ai/voicemailDetect.
 import { dispatchWebhook } from '../integrationsStore.js';
 import { syncOutcomeToGhl } from '../ghlSync.js';
 import type { CallSession } from '../ai/conversation.js';
+import { CLIENT_SILENCE_TIMEOUT_SEC } from '../ai/voiceStack.js';
 
 const router = Router();
-const MAX_NO_SPEECH_RETRIES = 3;
 
 function finalizeVoicemail(callSid: string, session: CallSession, source: 'amd' | 'speech'): void {
   if (session.outcomes.voicemail) return;
@@ -50,6 +50,7 @@ router.post('/ai-start', (req, res) => {
   const callSid = req.body.CallSid as string;
   const toNumber = (req.body.To as string) || (req.query.to as string);
   const agentName = (req.query.agentName as string) || 'Mia';
+  const promptId = (req.query.promptId as string) || undefined;
   const clientName = (req.query.clientName as string) || 'the client';
   const clientDob = (req.query.clientDob as string) || undefined;
   const clientPostcode = (req.query.clientPostcode as string) || undefined;
@@ -61,7 +62,17 @@ router.post('/ai-start', (req, res) => {
     `[Voice] ai-start ${callSid} → ${toNumber} client=${clientName}${ghlContactId ? ` ghl=${ghlContactId}` : ''}${contactId ? ` contact=${contactId}` : ''}${answeredBy ? ` answeredBy=${answeredBy}` : ''}`
   );
   const fromNumber = (req.body.From as string) || undefined;
-  const session = initSession(callSid, agentName, clientName, clientDob, clientPostcode, toNumber, ghlContactId, contactId);
+  const session = initSession(
+    callSid,
+    agentName,
+    clientName,
+    clientDob,
+    clientPostcode,
+    toNumber,
+    ghlContactId,
+    contactId,
+    promptId
+  );
   session.fromNumber = fromNumber;
 
   if (isTwilioMachineAnswer(answeredBy)) {
@@ -78,7 +89,7 @@ router.post('/ai-start', (req, res) => {
 
   res.type('text/xml');
   try {
-    res.send(buildConversationRelayTwiml(hello, toNumber));
+    res.send(buildConversationRelayTwiml(hello, toNumber, session.promptId));
   } catch (relayError) {
     console.error('[Voice] ConversationRelay unavailable — hanging up (no Polly fallback):', relayError);
     res.send(buildHangupTwiml());
@@ -102,20 +113,14 @@ router.post('/ai-no-speech', (req, res) => {
   }
 
   session.noSpeechRetries += 1;
+  console.log(`[Voice] Client silent ${CLIENT_SILENCE_TIMEOUT_SEC}s — ending ${callSid}`);
 
-  if (session.noSpeechRetries >= MAX_NO_SPEECH_RETRIES) {
-    const msg = 'I am having trouble hearing you. Thank you for your time. Goodbye.';
-    addMessage(callSid, 'assistant', msg);
-    session.outcomes.finalOutcome = 'No Response';
-    markEnded(callSid, 'agent');
-    res.type('text/xml');
-    return res.send(buildGoodbyeTwiml(msg));
-  }
-
-  const reprompt = session.scripts.noSpeechRetry;
-  addMessage(callSid, 'assistant', reprompt);
+  const msg = 'Thank you for your time. Goodbye.';
+  addMessage(callSid, 'assistant', msg);
+  session.outcomes.finalOutcome = 'No Response';
+  markEnded(callSid, 'agent');
   res.type('text/xml');
-  res.send(buildRepromptTwiml(reprompt, session.toNumber));
+  return res.send(buildGoodbyeTwiml(msg));
 });
 
 router.post('/ai-respond', async (req, res) => {
@@ -147,12 +152,8 @@ router.post('/ai-respond', async (req, res) => {
 
   if (!speechResult) {
     session.noSpeechRetries += 1;
-    if (session.noSpeechRetries < MAX_NO_SPEECH_RETRIES) {
-      const reprompt = session.scripts.noSpeechRetry;
-      addMessage(callSid, 'assistant', reprompt);
-      return res.send(buildRepromptTwiml(reprompt, session.toNumber));
-    }
-    const msg = 'I did not catch that. Thank you for your time. Goodbye.';
+    console.log(`[Voice] Client silent ${CLIENT_SILENCE_TIMEOUT_SEC}s — ending ${callSid}`);
+    const msg = 'Thank you for your time. Goodbye.';
     addMessage(callSid, 'assistant', msg);
     session.outcomes.finalOutcome = 'No Response';
     markEnded(callSid, 'agent');

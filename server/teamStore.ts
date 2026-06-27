@@ -17,8 +17,16 @@ export interface TeamUser {
 
 const TEAM_PATH = path.join(process.cwd(), 'server', 'data', 'team.json');
 
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
+function normalizePassword(password: string): string {
+  return password.trim();
+}
+
 function hashPassword(password: string): string {
-  return crypto.createHash('sha256').update(password).digest('hex');
+  return crypto.createHash('sha256').update(normalizePassword(password)).digest('hex');
 }
 
 function defaultAdmin(): TeamUser {
@@ -53,8 +61,12 @@ export function listTeam(): Omit<TeamUser, 'passwordHash'>[] {
 
 export function authenticate(email: string, password: string): Omit<TeamUser, 'passwordHash'> | null {
   const users = loadAll();
-  const user = users.find((u) => u.email.toLowerCase() === email.toLowerCase() && u.active);
-  if (!user || user.passwordHash !== hashPassword(password)) return null;
+  const normalizedEmail = normalizeEmail(email);
+  const normalizedPassword = normalizePassword(password);
+  if (!normalizedEmail || !normalizedPassword) return null;
+
+  const user = users.find((u) => u.email === normalizedEmail && u.active);
+  if (!user || user.passwordHash !== hashPassword(normalizedPassword)) return null;
 
   user.lastLogin = new Date().toISOString();
   saveAll(users);
@@ -70,15 +82,21 @@ export function createMember(input: {
   role?: TeamRole;
 }): Omit<TeamUser, 'passwordHash'> {
   const users = loadAll();
-  if (users.some((u) => u.email.toLowerCase() === input.email.toLowerCase())) {
+  const email = normalizeEmail(input.email);
+  const password = normalizePassword(input.password);
+  if (!email) throw new Error('Email is required.');
+  if (!password || password.length < 6) {
+    throw new Error('Password must be at least 6 characters.');
+  }
+  if (users.some((u) => u.email === email)) {
     throw new Error('Email already exists.');
   }
 
   const user: TeamUser = {
     id: `user-${Date.now()}`,
     name: input.name.trim(),
-    email: input.email.trim().toLowerCase(),
-    passwordHash: hashPassword(input.password),
+    email,
+    passwordHash: hashPassword(password),
     role: input.role ?? 'member',
     active: true,
     createdAt: new Date().toISOString(),
@@ -157,7 +175,11 @@ export function updateMember(
   if (updates.email) user.email = updates.email.trim().toLowerCase();
   if (updates.role) user.role = updates.role;
   if (updates.active !== undefined) user.active = updates.active;
-  if (updates.password) user.passwordHash = hashPassword(updates.password);
+  if (updates.password) {
+    const next = normalizePassword(updates.password);
+    if (!next || next.length < 6) throw new Error('Password must be at least 6 characters.');
+    user.passwordHash = hashPassword(next);
+  }
 
   saveAll(users);
   const { passwordHash: _, ...safe } = user;
