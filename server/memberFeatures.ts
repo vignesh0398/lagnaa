@@ -79,7 +79,7 @@ const FEATURE_PATHS: Record<MemberFeature, string[]> = {
   billing: ['/billing'],
   knowledge: ['/knowledge'],
   gateway: ['/gateway'],
-  security: ['/security'],
+  security: ['/security', '/settings/privacy', '/settings/gdpr'],
   appearance: ['/settings/appearance'],
 };
 
