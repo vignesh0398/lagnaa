@@ -6,6 +6,9 @@ import {
   type MemberFeature,
 } from './memberFeatures.js';
 import {
+  clearMongoError,
+  closeMongoTeam,
+  getLastMongoError,
   isMongoConfigured,
   loadTeamFromMongo,
   saveTeamToMongo,
@@ -19,6 +22,7 @@ export type TeamPersistenceMode = 'mongo' | 'file';
 
 let usersCache: TeamUser[] | null = null;
 let persistenceMode: TeamPersistenceMode = 'file';
+let mongoInitError: string | null = null;
 
 function toPublicUser(user: TeamUser): PublicTeamUser {
   const { passwordHash: _, ...safe } = user;
@@ -130,36 +134,55 @@ export function isTeamPersistenceDurable(): boolean {
   return persistenceMode === 'mongo' || Boolean(process.env.DATA_DIR?.trim());
 }
 
+export function getMongoInitError(): string | null {
+  return mongoInitError || getLastMongoError();
+}
+
+async function initMongoStore(): Promise<boolean> {
+  clearMongoError();
+  mongoInitError = null;
+  persistenceMode = 'mongo';
+
+  const fromMongo = await loadTeamFromMongo();
+  if (fromMongo.length) {
+    usersCache = fromMongo;
+    console.log(`[Team] Loaded ${fromMongo.length} member(s) from MongoDB`);
+    return true;
+  }
+
+  const fromFile = readTeamFile();
+  if (fromFile?.length) {
+    usersCache = fromFile;
+    await saveTeamToMongo(fromFile);
+    console.log(`[Team] Migrated ${fromFile.length} member(s) from file to MongoDB`);
+    return true;
+  }
+
+  const fromEnv = restoreFromEnvBackup();
+  if (fromEnv?.length) {
+    usersCache = fromEnv;
+    await saveTeamToMongo(fromEnv);
+    console.log(`[Team] Restored ${fromEnv.length} member(s) from TEAM_BACKUP_JSON into MongoDB`);
+    return true;
+  }
+
+  usersCache = [defaultAdmin()];
+  await saveTeamToMongo(usersCache);
+  console.log('[Team] Created default admin in MongoDB');
+  return true;
+}
+
 export async function initTeamStore(): Promise<void> {
   if (isMongoConfigured()) {
-    persistenceMode = 'mongo';
-    const fromMongo = await loadTeamFromMongo();
-    if (fromMongo.length) {
-      usersCache = fromMongo;
-      console.log(`[Team] Loaded ${fromMongo.length} member(s) from MongoDB`);
-      return;
+    try {
+      const ok = await initMongoStore();
+      if (ok) return;
+    } catch (error) {
+      mongoInitError = error instanceof Error ? error.message : 'MongoDB init failed';
+      console.error('[Team] MongoDB init failed, using temporary file storage:', mongoInitError);
+      persistenceMode = 'file';
+      await closeMongoTeam();
     }
-
-    const fromFile = readTeamFile();
-    if (fromFile?.length) {
-      usersCache = fromFile;
-      await saveTeamToMongo(fromFile);
-      console.log(`[Team] Migrated ${fromFile.length} member(s) from file to MongoDB`);
-      return;
-    }
-
-    const fromEnv = restoreFromEnvBackup();
-    if (fromEnv?.length) {
-      usersCache = fromEnv;
-      await saveTeamToMongo(fromEnv);
-      console.log(`[Team] Restored ${fromEnv.length} member(s) from TEAM_BACKUP_JSON into MongoDB`);
-      return;
-    }
-
-    usersCache = [defaultAdmin()];
-    await saveTeamToMongo(usersCache);
-    console.log('[Team] Created default admin in MongoDB');
-    return;
   }
 
   persistenceMode = 'file';

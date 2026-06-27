@@ -29,7 +29,12 @@ import newsRoutes from './routes/news.js';
 import { getWebhookBaseUrl, startTunnel } from './tunnel.js';
 import { loadedSecretFiles } from './bootstrapEnv.js';
 import { isMongoConfigured } from './db/mongoTeam.js';
-import { initTeamStore, isTeamPersistenceDurable, getTeamPersistenceMode } from './teamStore.js';
+import {
+  getMongoInitError,
+  initTeamStore,
+  isTeamPersistenceDurable,
+  getTeamPersistenceMode,
+} from './teamStore.js';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -54,6 +59,7 @@ app.get('/api/health', (_req, res) => {
     teamDataDurable: isTeamPersistenceDurable(),
     mongodbEnvSet: isMongoConfigured(),
     secretEnvFilesLoaded: loadedSecretFiles,
+    mongodbError: getMongoInitError(),
   });
 });
 

@@ -6,17 +6,58 @@ const COLLECTION = 'team_users';
 let client: MongoClient | null = null;
 let db: Db | null = null;
 let collection: Collection<TeamUser> | null = null;
+let lastMongoError: string | null = null;
+
+function cleanEnvValue(value: string | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim().replace(/^['"]|['"]$/g, '');
+  return trimmed || null;
+}
+
+export function normalizeMongoUri(raw: string): string {
+  const trimmed = raw.trim().replace(/^['"]|['"]$/g, '');
+  if (!trimmed) return trimmed;
+
+  const protoMatch = trimmed.match(/^(mongodb(?:\+srv)?:\/\/)(.+)$/i);
+  if (!protoMatch) return trimmed;
+
+  const [, proto, remainder] = protoMatch;
+  const atCount = (remainder.match(/@/g) || []).length;
+  if (atCount <= 1) return trimmed;
+
+  // Multiple @ means the password still contains a raw @ (e.g. Viki@3198)
+  const lastAt = remainder.lastIndexOf('@');
+  if (lastAt <= 0) return trimmed;
+
+  const creds = remainder.slice(0, lastAt);
+  const hostPart = remainder.slice(lastAt + 1);
+  const colonIdx = creds.indexOf(':');
+  if (colonIdx <= 0) return trimmed;
+
+  const user = creds.slice(0, colonIdx);
+  const password = creds.slice(colonIdx + 1);
+  return `${proto}${user}:${encodeURIComponent(password)}@${hostPart}`;
+}
 
 export function getMongoUri(): string | null {
-  const uri =
-    process.env.MONGODB_URI?.trim() ||
-    process.env.MONGO_URI?.trim() ||
-    process.env.DATABASE_URL?.trim();
-  return uri || null;
+  const raw =
+    cleanEnvValue(process.env.MONGODB_URI) ||
+    cleanEnvValue(process.env.MONGO_URI) ||
+    cleanEnvValue(process.env.DATABASE_URL);
+  if (!raw) return null;
+  return normalizeMongoUri(raw);
 }
 
 export function isMongoConfigured(): boolean {
   return Boolean(getMongoUri());
+}
+
+export function getLastMongoError(): string | null {
+  return lastMongoError;
+}
+
+export function clearMongoError(): void {
+  lastMongoError = null;
 }
 
 export async function connectMongoTeam(): Promise<Collection<TeamUser> | null> {
@@ -24,12 +65,19 @@ export async function connectMongoTeam(): Promise<Collection<TeamUser> | null> {
   if (!uri) return null;
   if (collection) return collection;
 
-  client = new MongoClient(uri);
-  await client.connect();
-  db = client.db();
-  collection = db.collection<TeamUser>(COLLECTION);
-  await collection.createIndex({ email: 1 }, { unique: true });
-  return collection;
+  try {
+    client = new MongoClient(uri);
+    await client.connect();
+    db = client.db();
+    collection = db.collection<TeamUser>(COLLECTION);
+    await collection.createIndex({ email: 1 }, { unique: true });
+    lastMongoError = null;
+    return collection;
+  } catch (error) {
+    lastMongoError = error instanceof Error ? error.message : 'MongoDB connection failed';
+    await closeMongoTeam();
+    throw error;
+  }
 }
 
 export async function loadTeamFromMongo(): Promise<TeamUser[]> {
