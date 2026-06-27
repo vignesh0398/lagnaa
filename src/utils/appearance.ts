@@ -1,5 +1,5 @@
 export type ThemeMode = 'dark' | 'light';
-export type AccentPreset = 'lagnaa' | 'ocean' | 'forest' | 'sunset' | 'royal' | 'amber';
+export type AccentPreset = 'bee' | 'lagnaa' | 'ocean' | 'forest' | 'sunset' | 'royal' | 'amber';
 export type UiDensity = 'comfortable' | 'compact';
 export type CornerStyle = 'rounded' | 'sharp';
 export type BackgroundStyle = 'mesh' | 'solid';
@@ -16,7 +16,7 @@ export interface AppearanceSettings {
 
 export const DEFAULT_APPEARANCE: AppearanceSettings = {
   mode: 'dark',
-  accent: 'lagnaa',
+  accent: 'bee',
   density: 'comfortable',
   corners: 'rounded',
   background: 'mesh',
@@ -28,7 +28,8 @@ export const ACCENT_PRESETS: {
   label: string;
   colors: [string, string, string];
 }[] = [
-  { id: 'lagnaa', label: 'Lagnaa', colors: ['#22d3ee', '#8b5cf6', '#ec4899'] },
+  { id: 'bee', label: 'Bee — Black & Gold', colors: ['#FBBF24', '#F59E0B', '#FDE047'] },
+  { id: 'lagnaa', label: 'Lagnaa (Cyan)', colors: ['#22d3ee', '#8b5cf6', '#ec4899'] },
   { id: 'ocean', label: 'Ocean', colors: ['#38bdf8', '#0ea5e9', '#14b8a6'] },
   { id: 'forest', label: 'Forest', colors: ['#34d399', '#22c55e', '#84cc16'] },
   { id: 'sunset', label: 'Sunset', colors: ['#fb923c', '#f472b6', '#f43f5e'] },
@@ -84,6 +85,14 @@ export function applyAppearanceToDocument(settings: AppearanceSettings): void {
     '--theme-gradient',
     `linear-gradient(135deg, ${preset.colors[0]} 0%, ${preset.colors[1]} 50%, ${preset.colors[2]} 100%)`
   );
+
+  const pageBg =
+    settings.accent === 'bee' && settings.mode === 'dark'
+      ? '#030303'
+      : settings.mode === 'light'
+        ? '#f1f5f9'
+        : '#050810';
+  root.style.setProperty('--theme-page-bg', pageBg);
 }
 
 /** Apply before React mounts so first paint matches saved prefs. */

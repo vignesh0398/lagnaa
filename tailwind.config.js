@@ -5,16 +5,16 @@ export default {
     extend: {
       colors: {
         surface: {
-          950: '#050810',
-          900: '#0a0f1c',
-          800: '#111827',
-          700: '#1a2236',
-          600: '#243049',
+          950: '#030303',
+          900: '#0a0a0a',
+          800: '#141414',
+          700: '#1c1c1c',
+          600: '#262626',
         },
         accent: {
-          cyan: '#22d3ee',
-          violet: '#8b5cf6',
-          pink: '#ec4899',
+          cyan: '#fbbf24',
+          violet: '#f59e0b',
+          pink: '#fde047',
           emerald: '#34d399',
         },
       },
@@ -23,13 +23,13 @@ export default {
         mono: ['"JetBrains Mono"', 'monospace'],
       },
       boxShadow: {
-        glow: '0 0 40px -10px rgba(34, 211, 238, 0.35)',
-        'glow-violet': '0 0 40px -10px rgba(139, 92, 246, 0.35)',
+        glow: '0 0 40px -10px rgba(251, 191, 36, 0.35)',
+        'glow-violet': '0 0 40px -10px rgba(245, 158, 11, 0.35)',
         card: '0 8px 32px rgba(0, 0, 0, 0.4)',
       },
       backgroundImage: {
-        'mesh': 'radial-gradient(at 20% 20%, rgba(34,211,238,0.12) 0, transparent 50%), radial-gradient(at 80% 0%, rgba(139,92,246,0.15) 0, transparent 45%), radial-gradient(at 60% 100%, rgba(236,72,153,0.08) 0, transparent 40%)',
-        'gradient-brand': 'linear-gradient(135deg, #22d3ee 0%, #8b5cf6 50%, #ec4899 100%)',
+        'mesh': 'radial-gradient(at 18% 18%, rgba(251,191,36,0.12) 0, transparent 50%), radial-gradient(at 82% 8%, rgba(245,158,11,0.1) 0, transparent 45%), radial-gradient(at 55% 92%, rgba(253,224,71,0.06) 0, transparent 40%)',
+        'gradient-brand': 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fde047 100%)',
       },
       animation: {
         'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',

@@ -14,7 +14,7 @@ export function LagnaaLogo({ size = 40, className = '', animated = true }: Lagna
       width={size}
       height={size}
       draggable={false}
-      className={`block shrink-0 object-contain ${animated ? 'l1-logo-animated' : ''} ${className}`}
+      className={`block shrink-0 rounded-2xl object-contain ${animated ? 'l1-logo-animated' : ''} ${className}`}
     />
   );
 }

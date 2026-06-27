@@ -66,15 +66,15 @@ export function Login() {
     <div className="theme-page-bg relative flex min-h-screen items-center justify-center overflow-hidden bg-surface-950 bg-mesh" style={{ perspective: 1200 }}>
       <div className="absolute inset-0 bg-mesh" />
       <FloatingOrb className="left-1/4 top-1/4 h-72 w-72 bg-accent-cyan/20" delay={0} />
-      <FloatingOrb className="right-1/4 bottom-1/4 h-96 w-96 bg-accent-violet/15" delay={2} />
-      <FloatingOrb className="left-1/2 top-1/2 h-48 w-48 bg-accent-pink/10" delay={4} />
+      <FloatingOrb className="right-1/4 bottom-1/4 h-96 w-96 bg-accent-cyan/12" delay={2} />
+      <FloatingOrb className="left-1/2 top-1/2 h-48 w-48 bg-accent-cyan/8" delay={4} />
 
       {/* Grid floor effect */}
       <div
         className="pointer-events-none absolute inset-0 opacity-20"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(56,189,248,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(56,189,248,0.15) 1px, transparent 1px)',
+            'linear-gradient(rgba(251,191,36,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(251,191,36,0.12) 1px, transparent 1px)',
           backgroundSize: '48px 48px',
           transform: 'perspective(500px) rotateX(60deg) scale(2)',
           transformOrigin: 'center bottom',
@@ -125,7 +125,7 @@ export function Login() {
           }`}
         >
           <motion.div
-            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-cyan/5 via-transparent to-accent-violet/5"
+            className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent-cyan/8 via-transparent to-accent-cyan/4"
             animate={{ opacity: [0.3, 0.6, 0.3] }}
             transition={{ duration: 4, repeat: Infinity }}
           />
@@ -191,7 +191,7 @@ export function Login() {
           <motion.button
             type="submit"
             disabled={loading || success}
-            whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(56,189,248,0.3)' }}
+            whileHover={{ scale: 1.02, boxShadow: '0 0 30px rgba(251,191,36,0.35)' }}
             whileTap={{ scale: 0.98 }}
             className="btn-primary relative w-full overflow-hidden"
           >
