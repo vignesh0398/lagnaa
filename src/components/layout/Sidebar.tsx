@@ -32,6 +32,7 @@ import {
   MapPinned,
 } from 'lucide-react';
 import { LagnaaLogo } from '../brand/LagnaaLogo';
+import { AmbientMusicPlayer } from '../home/AmbientMusicPlayer';
 import { useAuth } from '../../hooks/useAuth';
 import { canAccessPath } from '../../utils/roleAccess';
 
@@ -361,8 +362,9 @@ export function Sidebar() {
         )}
       </nav>
 
-      <div className="border-t border-white/5 p-4">
-        <div className="rounded-xl bg-gradient-to-br from-accent-cyan/10 to-accent-violet/10 p-3">
+      <div className="relative overflow-visible border-t border-white/5 p-4">
+        <AmbientMusicPlayer />
+        <div className="mt-3 rounded-xl bg-gradient-to-br from-accent-cyan/10 to-accent-violet/10 p-3">
           <p className="text-xs font-semibold text-white">Lagnaa One</p>
           <p className="mt-1 text-[10px] leading-relaxed text-slate-400">One platform, Infinite Growth</p>
           {user?.role === 'member' && (

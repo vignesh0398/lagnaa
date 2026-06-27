@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
-import { AmbientMusicPlayer } from '../home/AmbientMusicPlayer';
+import { WorkerBeeWidget } from '../workerbee/WorkerBeeWidget';
 import { Sidebar } from './Sidebar';
 
 export function AppLayout() {
@@ -18,7 +18,7 @@ export function AppLayout() {
       <main className="ml-64 min-h-screen">
         <Outlet />
       </main>
-      <AmbientMusicPlayer />
+      <WorkerBeeWidget />
     </div>
   );
 }

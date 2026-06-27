@@ -142,9 +142,9 @@ export function AmbientMusicPlayer() {
   const isActive = prefs.playing && !prefs.muted;
 
   return (
-    <div className="pointer-events-none fixed bottom-5 right-6 z-50 flex flex-col items-end gap-2">
+    <div className="relative">
       {expanded && (
-        <div className="pointer-events-auto w-72 rounded-2xl border border-white/10 bg-surface-900/95 p-4 shadow-2xl backdrop-blur-xl">
+        <div className="absolute bottom-full left-0 right-0 z-50 mb-2 max-h-[min(22rem,55vh)] overflow-y-auto rounded-2xl border border-white/10 bg-surface-900/95 p-4 shadow-2xl backdrop-blur-xl">
           <div className="mb-3 flex items-center justify-between">
             <div>
               <p className="text-xs font-semibold text-white">Ambient sound</p>
@@ -251,20 +251,34 @@ export function AmbientMusicPlayer() {
       <button
         type="button"
         onClick={() => void handleMainButtonClick()}
-        className={`pointer-events-auto relative flex h-12 w-12 items-center justify-center rounded-full border shadow-lg backdrop-blur-md transition hover:scale-105 ${
+        className={`relative flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition hover:bg-white/5 ${
           isActive
-            ? 'border-accent-cyan/40 bg-accent-cyan/15 text-accent-cyan'
-            : 'border-white/10 bg-surface-900/90 text-slate-400 hover:text-white'
+            ? 'border-accent-cyan/30 bg-accent-cyan/10 text-accent-cyan'
+            : 'border-white/10 bg-white/[0.03] text-slate-300 hover:text-white'
         }`}
         title="Ambient sound — paused until you press Play"
       >
-        {isActive && (
-          <span
-            className="absolute inset-0 animate-ping rounded-full bg-accent-cyan/15"
-            style={{ animationDuration: '2.5s' }}
-          />
-        )}
-        {isActive ? <TrackIcon className="relative h-5 w-5" /> : <Music2 className="relative h-5 w-5" />}
+        <span
+          className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border ${
+            isActive
+              ? 'border-accent-cyan/40 bg-accent-cyan/15'
+              : 'border-white/10 bg-surface-900/80'
+          }`}
+        >
+          {isActive && (
+            <span
+              className="absolute inset-0 animate-ping rounded-full bg-accent-cyan/15"
+              style={{ animationDuration: '2.5s' }}
+            />
+          )}
+          {isActive ? <TrackIcon className="relative h-4 w-4" /> : <Music2 className="relative h-4 w-4" />}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-xs font-semibold text-white">Ambient sound</span>
+          <span className="block truncate text-[10px] text-slate-500">
+            {isActive ? `Playing ${track.label}` : 'Soft background audio'}
+          </span>
+        </span>
       </button>
     </div>
   );
