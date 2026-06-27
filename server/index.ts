@@ -57,6 +57,9 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'lagnaa-api',
+    version: 'a93080c-workerbee',
+    gitCommit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? null,
+    features: { workerBee: true },
     teamPersistence: getTeamPersistenceMode(),
     teamDataDurable: isTeamPersistenceDurable(),
     mongodbEnvSet: isMongoConfigured(),
