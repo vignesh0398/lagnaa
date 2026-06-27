@@ -1,4 +1,4 @@
-import { MongoClient, type Collection, type Db } from 'mongodb';
+import { MongoClient, ServerApiVersion, type Collection, type Db } from 'mongodb';
 import type { TeamUser } from '../teamTypes.js';
 
 const COLLECTION = 'team_users';
@@ -56,6 +56,30 @@ export function getLastMongoError(): string | null {
   return lastMongoError;
 }
 
+export function friendlyMongoError(message: string | null): string | null {
+  if (!message) return null;
+  if (message.includes('SSL') || message.includes('tlsv1 alert internal error')) {
+    return 'MongoDB SSL blocked — in Atlas go to Network Access and allow 0.0.0.0/0 (Access from anywhere), then redeploy.';
+  }
+  if (message.includes('bad auth') || message.includes('Authentication failed')) {
+    return 'MongoDB login failed — check username/password in lagnaa.env (use %40 instead of @ in password).';
+  }
+  return message;
+}
+
+function mongoClientOptions() {
+  return {
+    serverApi: {
+      version: ServerApiVersion.v1,
+      strict: true,
+      deprecationErrors: true,
+    },
+    serverSelectionTimeoutMS: 15000,
+    connectTimeoutMS: 15000,
+    family: 4 as const,
+  };
+}
+
 export function clearMongoError(): void {
   lastMongoError = null;
 }
@@ -66,7 +90,7 @@ export async function connectMongoTeam(): Promise<Collection<TeamUser> | null> {
   if (collection) return collection;
 
   try {
-    client = new MongoClient(uri);
+    client = new MongoClient(uri, mongoClientOptions());
     await client.connect();
     db = client.db();
     collection = db.collection<TeamUser>(COLLECTION);

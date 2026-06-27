@@ -28,7 +28,7 @@ import mapsLeadsRoutes from './routes/mapsLeads.js';
 import newsRoutes from './routes/news.js';
 import { getWebhookBaseUrl, startTunnel } from './tunnel.js';
 import { loadedSecretFiles } from './bootstrapEnv.js';
-import { isMongoConfigured } from './db/mongoTeam.js';
+import { friendlyMongoError, isMongoConfigured } from './db/mongoTeam.js';
 import {
   getMongoInitError,
   initTeamStore,
@@ -59,7 +59,7 @@ app.get('/api/health', (_req, res) => {
     teamDataDurable: isTeamPersistenceDurable(),
     mongodbEnvSet: isMongoConfigured(),
     secretEnvFilesLoaded: loadedSecretFiles,
-    mongodbError: getMongoInitError(),
+    mongodbError: friendlyMongoError(getMongoInitError()),
   });
 });
 
