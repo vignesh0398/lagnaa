@@ -1,27 +1,26 @@
 import fs from 'fs';
-import path from 'path';
 import crypto from 'crypto';
 import {
   normalizeMemberFeatures,
   validateFeatureList,
   type MemberFeature,
 } from './memberFeatures.js';
+import {
+  isMongoConfigured,
+  loadTeamFromMongo,
+  saveTeamToMongo,
+} from './db/mongoTeam.js';
+import { getTeamFilePath } from './utils/dataPath.js';
+import type { PublicTeamUser, TeamRole, TeamUser } from './teamTypes.js';
 
-export type TeamRole = 'admin' | 'member';
+export type { TeamRole, TeamUser, PublicTeamUser };
 
-export interface TeamUser {
-  id: string;
-  name: string;
-  email: string;
-  passwordHash: string;
-  role: TeamRole;
-  active: boolean;
-  createdAt: string;
-  lastLogin?: string;
-  features?: MemberFeature[];
-}
+export type TeamPersistenceMode = 'mongo' | 'file';
 
-function toPublicUser(user: TeamUser): Omit<TeamUser, 'passwordHash'> {
+let usersCache: TeamUser[] | null = null;
+let persistenceMode: TeamPersistenceMode = 'file';
+
+function toPublicUser(user: TeamUser): PublicTeamUser {
   const { passwordHash: _, ...safe } = user;
   if (safe.role === 'member') {
     safe.features = normalizeMemberFeatures(safe.features);
@@ -30,8 +29,6 @@ function toPublicUser(user: TeamUser): Omit<TeamUser, 'passwordHash'> {
   }
   return safe;
 }
-
-const TEAM_PATH = path.join(process.cwd(), 'server', 'data', 'team.json');
 
 function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -57,25 +54,153 @@ function defaultAdmin(): TeamUser {
   };
 }
 
-function loadAll(): TeamUser[] {
-  if (!fs.existsSync(TEAM_PATH)) {
-    const initial = [defaultAdmin()];
-    saveAll(initial);
-    return initial;
+function readTeamFile(): TeamUser[] | null {
+  const filePath = getTeamFilePath();
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8')) as TeamUser[];
+  } catch {
+    return null;
   }
-  return JSON.parse(fs.readFileSync(TEAM_PATH, 'utf-8')) as TeamUser[];
+}
+
+function writeTeamFile(users: TeamUser[]): void {
+  const filePath = getTeamFilePath();
+  fs.writeFileSync(filePath, JSON.stringify(users, null, 2));
+}
+
+function parseBackupUsers(raw: unknown): TeamUser[] {
+  if (!Array.isArray(raw)) throw new Error('Backup must be a JSON array of team members.');
+  return raw.map((entry) => {
+    if (!entry || typeof entry !== 'object') {
+      throw new Error('Invalid team member entry in backup.');
+    }
+    const user = entry as Partial<TeamUser>;
+    if (!user.id || !user.name || !user.email || !user.passwordHash || !user.role) {
+      throw new Error('Backup is missing required team member fields.');
+    }
+    return {
+      id: String(user.id),
+      name: String(user.name).trim(),
+      email: normalizeEmail(String(user.email)),
+      passwordHash: String(user.passwordHash),
+      role: user.role === 'admin' ? 'admin' : 'member',
+      active: user.active !== false,
+      createdAt: user.createdAt ?? new Date().toISOString(),
+      lastLogin: user.lastLogin,
+      features: user.role === 'member' ? normalizeMemberFeatures(user.features) : undefined,
+    };
+  });
+}
+
+function restoreFromEnvBackup(): TeamUser[] | null {
+  const raw = process.env.TEAM_BACKUP_JSON?.trim();
+  if (!raw) return null;
+  try {
+    return parseBackupUsers(JSON.parse(raw));
+  } catch (error) {
+    console.warn('[Team] TEAM_BACKUP_JSON is invalid:', error instanceof Error ? error.message : error);
+    return null;
+  }
+}
+
+function loadAll(): TeamUser[] {
+  if (!usersCache) {
+    throw new Error('Team store not initialized. Call initTeamStore() on server startup.');
+  }
+  return usersCache;
 }
 
 function saveAll(users: TeamUser[]): void {
-  fs.mkdirSync(path.dirname(TEAM_PATH), { recursive: true });
-  fs.writeFileSync(TEAM_PATH, JSON.stringify(users, null, 2));
+  usersCache = users;
+  if (persistenceMode === 'mongo') {
+    void saveTeamToMongo(users).catch((error) => {
+      console.error('[Team] Mongo save failed:', error);
+    });
+    return;
+  }
+  writeTeamFile(users);
 }
 
-export function listTeam(): Omit<TeamUser, 'passwordHash'>[] {
+export function getTeamPersistenceMode(): TeamPersistenceMode {
+  return persistenceMode;
+}
+
+export function isTeamPersistenceDurable(): boolean {
+  return persistenceMode === 'mongo' || Boolean(process.env.DATA_DIR?.trim());
+}
+
+export async function initTeamStore(): Promise<void> {
+  if (isMongoConfigured()) {
+    persistenceMode = 'mongo';
+    const fromMongo = await loadTeamFromMongo();
+    if (fromMongo.length) {
+      usersCache = fromMongo;
+      console.log(`[Team] Loaded ${fromMongo.length} member(s) from MongoDB`);
+      return;
+    }
+
+    const fromFile = readTeamFile();
+    if (fromFile?.length) {
+      usersCache = fromFile;
+      await saveTeamToMongo(fromFile);
+      console.log(`[Team] Migrated ${fromFile.length} member(s) from file to MongoDB`);
+      return;
+    }
+
+    const fromEnv = restoreFromEnvBackup();
+    if (fromEnv?.length) {
+      usersCache = fromEnv;
+      await saveTeamToMongo(fromEnv);
+      console.log(`[Team] Restored ${fromEnv.length} member(s) from TEAM_BACKUP_JSON into MongoDB`);
+      return;
+    }
+
+    usersCache = [defaultAdmin()];
+    await saveTeamToMongo(usersCache);
+    console.log('[Team] Created default admin in MongoDB');
+    return;
+  }
+
+  persistenceMode = 'file';
+  const fromFile = readTeamFile();
+  if (fromFile?.length) {
+    usersCache = fromFile;
+    console.log(`[Team] Loaded ${fromFile.length} member(s) from file`);
+    return;
+  }
+
+  const fromEnv = restoreFromEnvBackup();
+  if (fromEnv?.length) {
+    usersCache = fromEnv;
+    writeTeamFile(fromEnv);
+    console.log(`[Team] Restored ${fromEnv.length} member(s) from TEAM_BACKUP_JSON`);
+    return;
+  }
+
+  usersCache = [defaultAdmin()];
+  writeTeamFile(usersCache);
+  console.log('[Team] Created default admin file store');
+}
+
+export function exportTeamBackup(): TeamUser[] {
+  return loadAll().map((user) => ({ ...user }));
+}
+
+export function restoreTeamBackup(raw: unknown): PublicTeamUser[] {
+  const users = parseBackupUsers(raw);
+  if (!users.some((u) => u.role === 'admin' && u.active)) {
+    throw new Error('Backup must include at least one active admin account.');
+  }
+  saveAll(users);
+  return users.map((user) => toPublicUser(user));
+}
+
+export function listTeam(): PublicTeamUser[] {
   return loadAll().map((user) => toPublicUser(user));
 }
 
-export function authenticate(email: string, password: string): Omit<TeamUser, 'passwordHash'> | null {
+export function authenticate(email: string, password: string): PublicTeamUser | null {
   const users = loadAll();
   const normalizedEmail = normalizeEmail(email);
   const normalizedPassword = normalizePassword(password);
@@ -96,7 +221,7 @@ export function createMember(input: {
   password: string;
   role?: TeamRole;
   features?: MemberFeature[];
-}): Omit<TeamUser, 'passwordHash'> {
+}): PublicTeamUser {
   const users = loadAll();
   const email = normalizeEmail(input.email);
   const password = normalizePassword(input.password);
@@ -126,7 +251,7 @@ export function createMember(input: {
   return toPublicUser(user);
 }
 
-export function getMemberById(id: string): Omit<TeamUser, 'passwordHash'> | null {
+export function getMemberById(id: string): PublicTeamUser | null {
   const user = loadAll().find((u) => u.id === id);
   if (!user) return null;
   return toPublicUser(user);
@@ -135,7 +260,7 @@ export function getMemberById(id: string): Omit<TeamUser, 'passwordHash'> | null
 export function updateProfile(
   id: string,
   updates: { name?: string; email?: string }
-): Omit<TeamUser, 'passwordHash'> {
+): PublicTeamUser {
   const users = loadAll();
   const index = users.findIndex((u) => u.id === id);
   if (index === -1) throw new Error('User not found');
@@ -177,7 +302,7 @@ export function changePassword(
 export function updateMember(
   id: string,
   updates: Partial<Pick<TeamUser, 'name' | 'email' | 'role' | 'active' | 'features'>> & { password?: string }
-): Omit<TeamUser, 'passwordHash'> {
+): PublicTeamUser {
   const users = loadAll();
   const index = users.findIndex((u) => u.id === id);
   if (index === -1) throw new Error('User not found');

@@ -4,12 +4,15 @@ import { motion } from 'framer-motion';
 import {
   AlertCircle,
   CheckCircle2,
+  Database,
+  Download,
   KeyRound,
   Loader2,
   Plus,
   Settings2,
   Shield,
   Trash2,
+  Upload,
   UserPlus,
   Users,
   X,
@@ -19,10 +22,13 @@ import { StatCard } from '../components/ui/StatCard';
 import { FeaturePicker } from '../components/team/FeaturePicker';
 import {
   addTeamMember,
+  exportTeamBackup,
   getTeamMembers,
   removeTeamMember,
+  restoreTeamBackup,
   updateTeamMember,
   type TeamMember,
+  type TeamPersistenceInfo,
 } from '../api/team';
 import { useAuth } from '../hooks/useAuth';
 import {
@@ -55,11 +61,14 @@ export function Team() {
   const [resetPassword, setResetPassword] = useState('');
   const [editFeaturesMember, setEditFeaturesMember] = useState<TeamMember | null>(null);
   const [editFeatures, setEditFeatures] = useState<MemberFeature[]>([]);
+  const [persistence, setPersistence] = useState<TeamPersistenceInfo | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      setMembers(await getTeamMembers());
+      const data = await getTeamMembers();
+      setMembers(data.members);
+      setPersistence(data.persistence);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load team');
     } finally {
@@ -175,6 +184,42 @@ export function Team() {
     }
   };
 
+  const handleExportBackup = async () => {
+    setError('');
+    try {
+      const backup = await exportTeamBackup();
+      const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `lagnaa-team-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setSuccess('Team backup downloaded. Keep this file safe before each deploy.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Export failed');
+    }
+  };
+
+  const handleImportBackup = async (file: File | null) => {
+    if (!file) return;
+    if (!window.confirm('Replace all team accounts with this backup file?')) return;
+    setSaving(true);
+    setError('');
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text) as { members?: unknown[] };
+      const membersPayload = Array.isArray(parsed.members) ? parsed.members : parsed;
+      const result = await restoreTeamBackup(membersPayload as unknown[]);
+      setSuccess(result.message);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Import failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const admins = members.filter((m) => m.role === 'admin').length;
   const active = members.filter((m) => m.active).length;
 
@@ -196,6 +241,48 @@ export function Team() {
           <p className="mt-2 text-xs text-slate-500">{MEMBER_ACCESS_SUMMARY}</p>
         </div>
 
+        {persistence && !persistence.durable && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <Database className="mt-0.5 h-5 w-5 shrink-0 text-amber-300" />
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-amber-100">Team accounts reset after each live deploy</p>
+                <p className="text-xs leading-relaxed text-amber-100/80">
+                  On Render free tier, sub-accounts are stored in temporary server memory. Every code update wipes them.
+                  Add a free <strong className="text-white">MongoDB Atlas</strong> connection string as{' '}
+                  <span className="font-mono text-amber-200">MONGODB_URI</span> in Render env vars to keep team data forever,
+                  or use Export / Import below as a manual backup.
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <button onClick={handleExportBackup} className="btn-secondary text-xs">
+                    <Download className="h-3.5 w-3.5" />
+                    Export backup
+                  </button>
+                  <label className="btn-secondary cursor-pointer text-xs">
+                    <Upload className="h-3.5 w-3.5" />
+                    Import backup
+                    <input
+                      type="file"
+                      accept="application/json,.json"
+                      className="hidden"
+                      onChange={(e) => {
+                        void handleImportBackup(e.target.files?.[0] ?? null);
+                        e.target.value = '';
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {persistence?.durable && (
+          <div className="rounded-2xl border border-accent-emerald/20 bg-accent-emerald/5 px-5 py-3 text-sm text-accent-emerald">
+            Team data is stored in {persistence.mode === 'mongo' ? 'MongoDB' : 'persistent disk'} and survives redeploys.
+          </div>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-accent-cyan" />
@@ -208,7 +295,13 @@ export function Team() {
               <StatCard label="Active" value={active} icon={UserPlus} accent="emerald" />
             </div>
 
-            <div className="flex justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
+              {persistence?.durable && (
+                <button onClick={handleExportBackup} className="btn-secondary text-xs">
+                  <Download className="h-3.5 w-3.5" />
+                  Export backup
+                </button>
+              )}
               <button onClick={() => setShowForm(!showForm)} className="btn-primary text-xs">
                 <Plus className="h-4 w-4" />
                 Add Sub-Account

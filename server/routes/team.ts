@@ -4,8 +4,12 @@ import {
   changePassword,
   createMember,
   deleteMember,
+  exportTeamBackup,
   getMemberById,
+  getTeamPersistenceMode,
+  isTeamPersistenceDurable,
   listTeam,
+  restoreTeamBackup,
   updateMember,
   updateProfile,
 } from '../teamStore.js';
@@ -25,7 +29,34 @@ router.post('/login', (req, res) => {
 });
 
 router.get('/', (_req, res) => {
-  res.json({ members: listTeam() });
+  res.json({
+    members: listTeam(),
+    persistence: {
+      mode: getTeamPersistenceMode(),
+      durable: isTeamPersistenceDurable(),
+    },
+  });
+});
+
+router.get('/backup', (_req, res) => {
+  res.json({
+    exportedAt: new Date().toISOString(),
+    members: exportTeamBackup(),
+  });
+});
+
+router.post('/restore', (req, res) => {
+  try {
+    const payload = req.body as { members?: unknown };
+    const members = restoreTeamBackup(payload.members ?? payload);
+    res.json({
+      success: true,
+      members,
+      message: `Restored ${members.length} team member(s).`,
+    });
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : 'Restore failed' });
+  }
 });
 
 router.get('/profile/:id', (req, res) => {

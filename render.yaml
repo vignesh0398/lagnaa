@@ -32,6 +32,9 @@ services:
         sync: false
       - key: ABR_GUID
         sync: false
+      # Free MongoDB Atlas — keeps team sub-accounts after redeploys (see DEPLOY.md)
+      - key: MONGODB_URI
+        sync: false
       # Optional override if using a custom domain:
       # - key: PUBLIC_WEBHOOK_URL
       #   sync: false

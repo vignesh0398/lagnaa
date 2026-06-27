@@ -21,9 +21,29 @@ export async function loginTeam(email: string, password: string): Promise<TeamMe
   return data.user;
 }
 
-export async function getTeamMembers(): Promise<TeamMember[]> {
-  const data = await fetchJson<{ members: TeamMember[] }>('/api/team');
-  return data.members;
+export interface TeamPersistenceInfo {
+  mode: 'mongo' | 'file';
+  durable: boolean;
+}
+
+export async function getTeamMembers(): Promise<{
+  members: TeamMember[];
+  persistence: TeamPersistenceInfo;
+}> {
+  return fetchJson<{ members: TeamMember[]; persistence: TeamPersistenceInfo }>('/api/team');
+}
+
+export async function exportTeamBackup(): Promise<{ exportedAt: string; members: unknown[] }> {
+  return fetchJson<{ exportedAt: string; members: unknown[] }>('/api/team/backup');
+}
+
+export async function restoreTeamBackup(members: unknown[]): Promise<{ members: TeamMember[]; message: string }> {
+  const data = await fetchJson<{ members: TeamMember[]; message: string }>('/api/team/restore', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ members }),
+  });
+  return data;
 }
 
 export async function addTeamMember(payload: {

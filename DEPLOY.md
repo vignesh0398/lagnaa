@@ -51,6 +51,28 @@ One server runs the **API + React app** together in production.
 4. **Health Check Path:** `/api/health`
 5. Deploy.
 
+## Keep team sub-accounts after updates (important)
+
+On Render free tier, team members created in the UI are **wiped every time you push new code** unless you use persistent storage.
+
+### Recommended — MongoDB Atlas (free)
+
+1. Go to [mongodb.com/cloud/atlas](https://www.mongodb.com/cloud/atlas) → create free **M0** cluster.
+2. **Database Access** → add a database user (username + password).
+3. **Network Access** → **Add IP Address** → **Allow Access from Anywhere** (`0.0.0.0/0`) for Render.
+4. **Database** → **Connect** → **Drivers** → copy the connection string, e.g.  
+   `mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/lagnaa?retryWrites=true&w=majority`
+5. Render Dashboard → **lagnaa** service → **Environment** → add:
+   - Key: `MONGODB_URI`
+   - Value: your connection string (replace `<password>` with the real password)
+6. **Save** and wait for redeploy.
+
+Team accounts will then survive every future deploy. Check `/api/health` — you should see `"teamDataDurable": true`.
+
+### Manual backup (until MongoDB is set up)
+
+On **Team** page → **Export backup** before each deploy → **Import backup** after deploy if members disappeared.
+
 ## After deploy
 
 Your app URL will look like:
@@ -78,6 +100,7 @@ No manual upload needed after the first setup.
 | **Sleeps after 15 min idle** | First visit after idle takes ~1 min to wake |
 | **750 hours/month** | Enough for testing, not 24/7 all month |
 | **No persistent disk** | Data in `server/data/` resets on redeploy/restart |
+| **Team sub-accounts vanish** | Set `MONGODB_URI` (free Atlas) — see below |
 | **Voice calls** | May miss calls while server is asleep — upgrade to paid ($7/mo) for always-on |
 
 ## Upgrade when ready
@@ -94,6 +117,7 @@ Render Dashboard → your service → **Upgrade** to Starter ($7/mo):
 |---------|-----|
 | Build fails | Check Render logs; ensure Node 20+ |
 | Login fails | Wait for deploy to finish; check `/api/health` returns `{"ok":true}` |
+| Team members gone after deploy | Add `MONGODB_URI` or import a team backup JSON |
 | Maps shows few results | Add `GOOGLE_PLACES_API_KEY` + enable **Places API (New)** in Google Cloud |
 | Voice calls fail | Server may be asleep (free tier) or Twilio webhook URL wrong |
 | Custom domain | Render → Settings → Custom Domains, then set `PUBLIC_WEBHOOK_URL` |

@@ -26,6 +26,7 @@ import prospectsRoutes from './routes/prospects.js';
 import mapsLeadsRoutes from './routes/mapsLeads.js';
 import newsRoutes from './routes/news.js';
 import { getWebhookBaseUrl, startTunnel } from './tunnel.js';
+import { initTeamStore, isTeamPersistenceDurable, getTeamPersistenceMode } from './teamStore.js';
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
@@ -43,7 +44,12 @@ app.use((req, _res, next) => {
 });
 
 app.get('/api/health', (_req, res) => {
-  res.json({ ok: true, service: 'lagnaa-api' });
+  res.json({
+    ok: true,
+    service: 'lagnaa-api',
+    teamPersistence: getTeamPersistenceMode(),
+    teamDataDurable: isTeamPersistenceDurable(),
+  });
 });
 
 app.use('/api/twilio', twilioRoutes);
@@ -82,11 +88,23 @@ if (process.env.NODE_ENV === 'production') {
 const server = http.createServer(app);
 attachConversationRelay(server);
 
-server.listen(PORT, async () => {
-  console.log(`Lagnaa API running on port ${PORT}`);
-  if (process.env.NODE_ENV === 'production') {
-    const base = getWebhookBaseUrl();
-    if (base) console.log(`Public URL: ${base}`);
-  }
-  await startTunnel(PORT);
+async function startServer(): Promise<void> {
+  await initTeamStore();
+  server.listen(PORT, async () => {
+    console.log(`Lagnaa API running on port ${PORT}`);
+    console.log(`[Team] Persistence: ${getTeamPersistenceMode()} (durable=${isTeamPersistenceDurable()})`);
+    if (process.env.NODE_ENV === 'production' && !isTeamPersistenceDurable()) {
+      console.warn('[Team] Live team accounts reset on each Render redeploy unless MONGODB_URI or DATA_DIR is set.');
+    }
+    if (process.env.NODE_ENV === 'production') {
+      const base = getWebhookBaseUrl();
+      if (base) console.log(`Public URL: ${base}`);
+    }
+    await startTunnel(PORT);
+  });
+}
+
+startServer().catch((error) => {
+  console.error('Failed to start Lagnaa API:', error);
+  process.exit(1);
 });
