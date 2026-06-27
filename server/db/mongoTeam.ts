@@ -7,12 +7,20 @@ let client: MongoClient | null = null;
 let db: Db | null = null;
 let collection: Collection<TeamUser> | null = null;
 
+export function getMongoUri(): string | null {
+  const uri =
+    process.env.MONGODB_URI?.trim() ||
+    process.env.MONGO_URI?.trim() ||
+    process.env.DATABASE_URL?.trim();
+  return uri || null;
+}
+
 export function isMongoConfigured(): boolean {
-  return Boolean(process.env.MONGODB_URI?.trim());
+  return Boolean(getMongoUri());
 }
 
 export async function connectMongoTeam(): Promise<Collection<TeamUser> | null> {
-  const uri = process.env.MONGODB_URI?.trim();
+  const uri = getMongoUri();
   if (!uri) return null;
   if (collection) return collection;
 

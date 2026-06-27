@@ -26,6 +26,7 @@ import prospectsRoutes from './routes/prospects.js';
 import mapsLeadsRoutes from './routes/mapsLeads.js';
 import newsRoutes from './routes/news.js';
 import { getWebhookBaseUrl, startTunnel } from './tunnel.js';
+import { isMongoConfigured } from './db/mongoTeam.js';
 import { initTeamStore, isTeamPersistenceDurable, getTeamPersistenceMode } from './teamStore.js';
 
 const app = express();
@@ -49,6 +50,7 @@ app.get('/api/health', (_req, res) => {
     service: 'lagnaa-api',
     teamPersistence: getTeamPersistenceMode(),
     teamDataDurable: isTeamPersistenceDurable(),
+    mongodbEnvSet: isMongoConfigured(),
   });
 });
 
