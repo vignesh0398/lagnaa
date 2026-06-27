@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" role="img" aria-label="Lagnaa One L1">
+  <defs>
+    <linearGradient id="brand" x1="20" y1="18" x2="78" y2="82" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#22d3ee"/>
+      <stop offset="35%" stop-color="#3b82f6"/>
+      <stop offset="65%" stop-color="#8b5cf6"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+    <linearGradient id="arc" x1="6" y1="18" x2="94" y2="82" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="42%" stop-color="#6366f1"/>
+      <stop offset="72%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#f472b6"/>
+    </linearGradient>
+  </defs>
+  <path d="M 10 62 A 40 40 0 1 1 90 62" stroke="url(#arc)" stroke-width="3.4" stroke-linecap="round" fill="none"/>
+  <path d="M 24 80 V 26 H 31 V 56 H 49 V 80 H 24 Z" fill="url(#brand)"/>
+  <path d="M 47 22 H 61 C 64.5 22 66.5 24 66.5 27 V 80 H 60 V 28 H 47 V 22 Z" fill="url(#brand)"/>
+</svg>

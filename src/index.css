@@ -1,0 +1,94 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-surface-600/50;
+  }
+
+  body {
+    @apply bg-surface-950 text-slate-200 antialiased;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-surface-600/80;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply rounded-2xl border border-white/10 bg-surface-800/60 backdrop-blur-xl shadow-card;
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-[border-color,box-shadow] duration-150 ease-out hover:border-accent-cyan/30 hover:shadow-glow;
+  }
+
+  .gradient-text {
+    @apply bg-gradient-brand bg-clip-text text-transparent;
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-brand px-5 py-2.5 text-sm font-semibold text-white shadow-glow transition-[transform,box-shadow,opacity] duration-100 ease-out hover:scale-[1.01] hover:shadow-glow-violet active:scale-[0.99];
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 transition-[border-color,background-color,color] duration-100 ease-out hover:border-white/20 hover:bg-white/10;
+  }
+
+  .input-field {
+    @apply w-full rounded-xl border border-white/10 bg-surface-900/80 px-4 py-2.5 text-sm text-slate-200 placeholder:text-slate-500 outline-none transition-[border-color,box-shadow] duration-75 ease-out focus:border-accent-cyan/50 focus:ring-1 focus:ring-accent-cyan/25;
+  }
+
+  select.input-field {
+    @apply cursor-pointer;
+  }
+
+  .status-pill {
+    @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold uppercase tracking-wide;
+  }
+
+  .l1-logo-animated {
+    animation: l1-logo-float 5s ease-in-out infinite;
+  }
+}
+
+@keyframes l1-logo-float {
+  0%,
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  50% {
+    transform: scale(1.04);
+    filter: drop-shadow(0 0 12px rgba(139, 92, 246, 0.35));
+  }
+}
+
+.home-breathe-ring {
+  box-shadow: 0 0 40px rgba(56, 189, 248, 0.12);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .l1-logo-animated {
+    animation: none;
+  }
+
+  .input-field,
+  .btn-primary,
+  .btn-secondary,
+  .glass-card-hover {
+    transition: none;
+  }
+}

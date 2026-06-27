@@ -1,0 +1,37 @@
+# Render Blueprint — Lagnaa (ai-call-crm)
+# Deploy: Dashboard → New → Blueprint → connect this repo
+# Or: New → Web Service → connect repo (Render auto-detects these settings)
+
+services:
+  - type: web
+    name: lagnaa
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: ENABLE_TUNNEL
+        value: false
+      # Render sets PORT automatically — do not override
+      # Webhook URL auto-detected from RENDER_EXTERNAL_URL (see server/tunnel.ts)
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GOOGLE_PLACES_API_KEY
+        sync: false
+      - key: COMPANIES_HOUSE_API_KEY
+        sync: false
+      - key: ABR_GUID
+        sync: false
+      # Optional override if using a custom domain:
+      # - key: PUBLIC_WEBHOOK_URL
+      #   sync: false
