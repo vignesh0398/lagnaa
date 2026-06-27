@@ -1,6 +1,7 @@
 import { Check, Moon, Palette, RotateCcw, Sparkles, Sun } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { useAppearance } from '../hooks/useAppearance';
+import { BRAND_NAME, BRAND_TAGLINE } from '../constants/brand';
 import {
   ACCENT_PRESETS,
   type AccentPreset,
@@ -218,7 +219,8 @@ export function AppearanceSettings() {
         <section className="glass-card overflow-hidden p-6">
           <p className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-500">Live preview</p>
           <div className="rounded-2xl border border-white/10 bg-surface-900/50 p-5">
-            <p className="gradient-text text-xl font-bold">Lagnaa One</p>
+            <p className="gradient-text text-xl font-bold">{BRAND_NAME}</p>
+            <p className="mt-1 text-xs text-slate-500">{BRAND_TAGLINE}</p>
             <p className="mt-2 text-sm text-slate-400">Buttons, accents, and cards update instantly as you change settings.</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <button type="button" className="btn-primary text-xs">

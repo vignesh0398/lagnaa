@@ -3,6 +3,7 @@ import { Loader2, Send, X } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
 import { workerBeeChat, type WorkerBeeChatMessage } from '../../api/workerbee';
 import { useAuth } from '../../hooks/useAuth';
+import { BRAND_ASSISTANT, BRAND_NAME, BRAND_TAGLINE } from '../../constants/brand';
 import { BeeIcon } from './BeeIcon';
 
 const QUICK_PROMPTS = [
@@ -22,7 +23,7 @@ export function WorkerBeeChat({ onClose }: WorkerBeeChatProps) {
   const [messages, setMessages] = useState<WorkerBeeChatMessage[]>([
     {
       role: 'assistant',
-      content: `Hi${user?.name ? ` ${user.name.split(' ')[0]}` : ''}! I'm WorkerBee — your Lagnaa guide. Ask me about setup, voice calls, contacts, GHL, agents, GDPR, or any page you're on.`,
+      content: `Hi${user?.name ? ` ${user.name.split(' ')[0]}` : ''}! I'm ${BRAND_ASSISTANT} — your ${BRAND_NAME} guide (${BRAND_TAGLINE}). Ask me about setup, voice calls, contacts, GHL, agents, GDPR, or any page you're on.`,
     },
   ]);
   const [input, setInput] = useState('');
@@ -66,8 +67,8 @@ export function WorkerBeeChat({ onClose }: WorkerBeeChatProps) {
           <BeeIcon size={22} animated />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-white">WorkerBee</p>
-          <p className="truncate text-[10px] text-slate-500">Lagnaa CRM assistant</p>
+          <p className="truncate text-sm font-semibold text-white">{BRAND_ASSISTANT}</p>
+          <p className="truncate text-[10px] text-slate-500">{BRAND_NAME} · {BRAND_TAGLINE}</p>
         </div>
         <button
           type="button"

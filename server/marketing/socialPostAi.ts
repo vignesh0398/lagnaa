@@ -95,7 +95,7 @@ export async function generateSocialPosts(input: GenerateSocialPostsInput): Prom
     })
     .join('\n');
 
-  const systemPrompt = `You are a social media copywriter for ${brandName} ("One platform, Infinite Growth").
+  const systemPrompt = `You are a social media copywriter for ${brandName} ("One hive, infinite growth").
 Write platform-native posts. Tone: ${tone}.
 Return JSON only:
 {

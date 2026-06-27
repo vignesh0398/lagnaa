@@ -6,6 +6,13 @@ import { LagnaaLogo } from '../components/brand/LagnaaLogo';
 import { API_OFFLINE_MESSAGE, checkApiHealth } from '../api/fetchJson';
 import { loginTeam } from '../api/team';
 import { useAuth } from '../hooks/useAuth';
+import {
+  BRAND_ASSISTANT,
+  BRAND_BYLINE,
+  BRAND_LOGIN_SPARKLE,
+  BRAND_NAME,
+  BRAND_TAGLINE,
+} from '../constants/brand';
 
 function FloatingOrb({ className, delay }: { className: string; delay: number }) {
   return (
@@ -92,18 +99,21 @@ export function Login() {
             <LagnaaLogo size={120} />
           </div>
           <h1 className="text-3xl font-bold text-white">
-            Welcome to <span className="gradient-text">Lagnaa One</span>
+            Welcome to <span className="gradient-text">{BRAND_NAME}</span>
           </h1>
-          <p className="mt-2 text-sm font-medium text-slate-300">One platform, Infinite Growth</p>
-          <p className="mt-1 text-xs text-slate-500">Powered by DataCrew</p>
+          <p className="mt-2 text-sm font-medium text-slate-300">{BRAND_TAGLINE}</p>
+          <p className="mt-1 text-xs text-slate-500">{BRAND_BYLINE}</p>
           <motion.p
             animate={{ opacity: [0.5, 1, 0.5] }}
             transition={{ duration: 3, repeat: Infinity }}
             className="mt-3 flex items-center justify-center gap-1 text-xs text-accent-cyan"
           >
             <Sparkles className="h-3 w-3" />
-            Voice · WhatsApp · Email — unified CRM
+            {BRAND_LOGIN_SPARKLE}
           </motion.p>
+          <p className="mt-1 text-[10px] text-slate-600">
+            Meet <span className="text-amber-400/90">{BRAND_ASSISTANT}</span> — tap the bee for help anytime
+          </p>
         </motion.div>
 
         <motion.div

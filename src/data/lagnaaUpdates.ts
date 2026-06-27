@@ -16,6 +16,17 @@ export interface LagnaaUpdate {
 
 export const LAGNAA_UPDATES: LagnaaUpdate[] = [
   {
+    id: 'bee-rebrand',
+    section: 'new',
+    title: 'Bee brand & WorkerBee',
+    message:
+      'New bee growth logo, black & gold theme, tagline "One hive, infinite growth", and WorkerBee AI help on every page.',
+    time: 'Just shipped',
+    unread: true,
+    icon: Rocket,
+    highlight: true,
+  },
+  {
     id: 'social-studio-beta',
     section: 'new',
     title: 'Social Studio (beta)',
@@ -58,10 +69,10 @@ export const LAGNAA_UPDATES: LagnaaUpdate[] = [
   {
     id: 'lagnaa-brand',
     section: 'new',
-    title: 'Lagnaa One branding',
-    message: 'New L1 logo, tagline "One platform, Infinite Growth", and refreshed login + sidebar.',
-    time: 'New',
-    unread: true,
+    title: 'Lagnaa One platform',
+    message: 'Unified CRM for voice, WhatsApp, email, and marketing — built to help your business grow.',
+    time: 'Core',
+    unread: false,
     icon: Rocket,
   },
   {

@@ -32,6 +32,13 @@ import {
   MapPinned,
 } from 'lucide-react';
 import { LagnaaLogo } from '../brand/LagnaaLogo';
+import {
+  BRAND_BYLINE,
+  BRAND_COPYRIGHT,
+  BRAND_NAME,
+  BRAND_SHORT,
+  BRAND_TAGLINE,
+} from '../../constants/brand';
 import { AmbientMusicPlayer } from '../home/AmbientMusicPlayer';
 import { useAuth } from '../../hooks/useAuth';
 import { canAccessPath } from '../../utils/roleAccess';
@@ -213,15 +220,15 @@ export function Sidebar() {
       <NavLink
         to="/home"
         className="flex items-center gap-3 border-b border-white/5 px-6 py-5 transition hover:bg-white/[0.03]"
-        title="Lagnaa One home — news & updates"
+        title={`${BRAND_NAME} home — news & updates`}
       >
         <LagnaaLogo size={48} />
         <div>
           <h1 className="text-lg font-bold text-white">
-            Lagnaa <span className="gradient-text">One</span>
+            {BRAND_SHORT} <span className="gradient-text">One</span>
           </h1>
-          <p className="text-[10px] font-medium text-slate-400">One platform, Infinite Growth</p>
-          <p className="text-[9px] font-medium uppercase tracking-widest text-slate-600">Powered by DataCrew</p>
+          <p className="text-[10px] font-medium text-slate-400">{BRAND_TAGLINE}</p>
+          <p className="text-[9px] font-medium uppercase tracking-widest text-slate-600">{BRAND_BYLINE}</p>
         </div>
       </NavLink>
 
@@ -365,13 +372,13 @@ export function Sidebar() {
       <div className="relative overflow-visible border-t border-white/5 p-4">
         <AmbientMusicPlayer />
         <div className="mt-3 rounded-xl bg-gradient-to-br from-accent-cyan/10 to-accent-violet/10 p-3">
-          <p className="text-xs font-semibold text-white">Lagnaa One</p>
-          <p className="mt-1 text-[10px] leading-relaxed text-slate-400">One platform, Infinite Growth</p>
+          <p className="text-xs font-semibold text-white">{BRAND_NAME}</p>
+          <p className="mt-1 text-[10px] leading-relaxed text-slate-400">{BRAND_TAGLINE}</p>
           {user?.role === 'member' && (
             <p className="mt-2 text-[10px] font-medium uppercase tracking-wider text-accent-cyan/80">Member access</p>
           )}
         </div>
-        <p className="mt-3 text-center text-[10px] text-slate-600">v1.0 · © Lagnaa One · Powered by DataCrew</p>
+        <p className="mt-3 text-center text-[10px] text-slate-600">v2.0 · {BRAND_COPYRIGHT}</p>
       </div>
     </aside>
   );

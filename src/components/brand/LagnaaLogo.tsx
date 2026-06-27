@@ -1,4 +1,5 @@
 import logoUrl from '../../assets/lagnaa-logo.png';
+import { BRAND_NAME } from '../../constants/brand';
 
 type LagnaaLogoProps = {
   size?: number;
@@ -10,7 +11,7 @@ export function LagnaaLogo({ size = 40, className = '', animated = true }: Lagna
   return (
     <img
       src={logoUrl}
-      alt="Lagnaa One"
+      alt={BRAND_NAME}
       width={size}
       height={size}
       draggable={false}

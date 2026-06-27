@@ -13,6 +13,7 @@ import { LagnaaLogo } from '../components/brand/LagnaaLogo';
 import { TechNewsFeed } from '../components/home/TechNewsFeed';
 import { useAuth } from '../hooks/useAuth';
 import { LAGNAA_UPDATES, QUICK_DESTINATIONS } from '../data/lagnaaUpdates';
+import { BRAND_ASSISTANT, BRAND_HOME_INTRO, BRAND_NAME, BRAND_TAGLINE } from '../constants/brand';
 import { canAccessPath } from '../utils/roleAccess';
 
 function FloatingOrb({ className, delay }: { className: string; delay: number }) {
@@ -76,11 +77,10 @@ export function HomeHub() {
 
           <p className="text-sm font-medium text-accent-cyan">{timeGreeting()}, {firstName}</p>
           <h1 className="mt-2 text-4xl font-bold tracking-tight text-white md:text-5xl">
-            Welcome to <span className="gradient-text">Lagnaa One</span>
+            Welcome to <span className="gradient-text">{BRAND_NAME}</span>
           </h1>
-          <p className="mx-auto mt-3 max-w-xl text-base text-slate-400">
-            Your calm command centre. Catch up on what&apos;s new, take a breath, then jump into whatever you need today.
-          </p>
+          <p className="mx-auto mt-2 max-w-lg text-sm font-medium text-accent-cyan">{BRAND_TAGLINE}</p>
+          <p className="mx-auto mt-3 max-w-xl text-base text-slate-400">{BRAND_HOME_INTRO}</p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <button type="button" onClick={startBreath} className="btn-primary">
@@ -94,7 +94,7 @@ export function HomeHub() {
           </div>
 
           <p className="mt-4 text-xs text-slate-600">
-            Tip: optional ambient sound — click the <span className="text-slate-400">music icon</span> bottom-right, then press Play when you want it
+            Tip: tap the <span className="text-amber-400/90">{BRAND_ASSISTANT}</span> bee bottom-right for help, or ambient sound in the sidebar footer
           </p>
         </motion.section>
 
@@ -240,10 +240,10 @@ export function HomeHub() {
             </div>
 
             <div className="mt-6 rounded-2xl border border-accent-violet/20 bg-gradient-to-br from-accent-violet/10 to-transparent p-5">
-              <p className="text-sm font-semibold text-white">One platform, Infinite Growth</p>
+              <p className="text-sm font-semibold text-white">{BRAND_TAGLINE}</p>
               <p className="mt-2 text-xs leading-relaxed text-slate-400">
-                You&apos;re on the latest Lagnaa One build. Use Channels for Prospect Finder, or Marketing for Social Studio, or
-                open Contacts to start outreach — no rush, pick your pace.
+                You&apos;re on the latest {BRAND_NAME} build — black & gold bee branding with {BRAND_ASSISTANT} built in. Open
+                Contacts to start outreach, or Marketing for Social Studio — no rush, pick your pace.
               </p>
             </div>
           </motion.section>
