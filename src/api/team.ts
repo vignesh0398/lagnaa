@@ -1,4 +1,5 @@
 import { fetchJson } from './fetchJson';
+import type { MemberFeature } from '../utils/memberFeatures';
 
 export interface TeamMember {
   id: string;
@@ -8,6 +9,7 @@ export interface TeamMember {
   active: boolean;
   createdAt: string;
   lastLogin?: string;
+  features?: MemberFeature[];
 }
 
 export async function loginTeam(email: string, password: string): Promise<TeamMember> {
@@ -29,6 +31,7 @@ export async function addTeamMember(payload: {
   email: string;
   password: string;
   role?: 'admin' | 'member';
+  features?: MemberFeature[];
 }): Promise<TeamMember> {
   const data = await fetchJson<{ member: TeamMember }>('/api/team', {
     method: 'POST',
@@ -40,7 +43,14 @@ export async function addTeamMember(payload: {
 
 export async function updateTeamMember(
   id: string,
-  payload: Partial<{ name: string; email: string; role: 'admin' | 'member'; active: boolean; password: string }>
+  payload: Partial<{
+    name: string;
+    email: string;
+    role: 'admin' | 'member';
+    active: boolean;
+    password: string;
+    features: MemberFeature[];
+  }>
 ): Promise<TeamMember> {
   const data = await fetchJson<{ member: TeamMember }>(`/api/team/${id}`, {
     method: 'PUT',

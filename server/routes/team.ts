@@ -68,16 +68,17 @@ router.post('/profile/password', (req, res) => {
 
 router.post('/', (req, res) => {
   try {
-    const { name, email, password, role } = req.body as {
+    const { name, email, password, role, features } = req.body as {
       name?: string;
       email?: string;
       password?: string;
       role?: 'admin' | 'member';
+      features?: string[];
     };
     if (!name?.trim() || !email?.trim() || !password?.trim()) {
       return res.status(400).json({ error: 'Name, email, and password are required.' });
     }
-    const member = createMember({ name, email, password, role });
+    const member = createMember({ name, email, password, role, features: features as never });
     res.json({ success: true, member });
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : 'Create failed' });

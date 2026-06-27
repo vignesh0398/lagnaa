@@ -10,7 +10,7 @@ export function RoleGuard() {
 
   useEffect(() => {
     if (!user || canAccessPath(user, pathname)) return;
-    navigate('/contacts', { replace: true, state: { accessDenied: true } });
+    navigate('/home', { replace: true, state: { accessDenied: true } });
   }, [pathname, user, navigate]);
 
   if (user && !canAccessPath(user, pathname)) {

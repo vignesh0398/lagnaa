@@ -38,7 +38,7 @@ function formatLastLogin(value?: string): string {
 
 export function ProfilePanel({ open, onClose }: ProfilePanelProps) {
   const navigate = useNavigate();
-  const { user, logout, updateUser, initials } = useAuth();
+  const { user, logout, updateUser, initials, isAdmin } = useAuth();
 
   const [refreshing, setRefreshing] = useState(false);
   const [name, setName] = useState('');
@@ -369,7 +369,7 @@ export function ProfilePanel({ open, onClose }: ProfilePanelProps) {
                       Appearance settings
                     </button>
 
-                    {role === 'admin' && (
+                    {isAdmin && (
                       <button
                         onClick={() => goTo('/team')}
                         className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/5 hover:text-white"

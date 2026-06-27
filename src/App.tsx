@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { AuthProvider } from './hooks/useAuth';
 import { AppLayout } from './components/layout/AppLayout';
 import { RoleGuard } from './components/layout/RoleGuard';
 import { AppearanceProvider } from './hooks/useAppearance';
@@ -37,6 +38,7 @@ import { HomeHub } from './pages/HomeHub';
 export default function App() {
   return (
     <BrowserRouter>
+      <AuthProvider>
       <AppearanceProvider>
       <Routes>
         <Route path="/" element={<Login />} />
@@ -79,6 +81,7 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       </AppearanceProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }

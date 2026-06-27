@@ -5,6 +5,7 @@ import { AlertCircle, ArrowRight, Lock, Mail, Sparkles } from 'lucide-react';
 import { LagnaaLogo } from '../components/brand/LagnaaLogo';
 import { API_OFFLINE_MESSAGE, checkApiHealth } from '../api/fetchJson';
 import { loginTeam } from '../api/team';
+import { useAuth } from '../hooks/useAuth';
 
 function FloatingOrb({ className, delay }: { className: string; delay: number }) {
   return (
@@ -22,6 +23,7 @@ function FloatingOrb({ className, delay }: { className: string; delay: number })
 
 export function Login() {
   const navigate = useNavigate();
+  const { updateUser } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -50,7 +52,7 @@ export function Login() {
     setError('');
     try {
       const user = await loginTeam(email.trim(), password.trim());
-      localStorage.setItem('datacrew_user', JSON.stringify(user));
+      updateUser(user);
       setSuccess(true);
       setTimeout(() => navigate('/home'), 900);
     } catch (err) {

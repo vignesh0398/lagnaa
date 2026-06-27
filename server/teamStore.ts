@@ -1,6 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
+import {
+  normalizeMemberFeatures,
+  validateFeatureList,
+  type MemberFeature,
+} from './memberFeatures.js';
 
 export type TeamRole = 'admin' | 'member';
 
@@ -13,6 +18,17 @@ export interface TeamUser {
   active: boolean;
   createdAt: string;
   lastLogin?: string;
+  features?: MemberFeature[];
+}
+
+function toPublicUser(user: TeamUser): Omit<TeamUser, 'passwordHash'> {
+  const { passwordHash: _, ...safe } = user;
+  if (safe.role === 'member') {
+    safe.features = normalizeMemberFeatures(safe.features);
+  } else {
+    delete safe.features;
+  }
+  return safe;
 }
 
 const TEAM_PATH = path.join(process.cwd(), 'server', 'data', 'team.json');
@@ -56,7 +72,7 @@ function saveAll(users: TeamUser[]): void {
 }
 
 export function listTeam(): Omit<TeamUser, 'passwordHash'>[] {
-  return loadAll().map(({ passwordHash: _, ...user }) => user);
+  return loadAll().map((user) => toPublicUser(user));
 }
 
 export function authenticate(email: string, password: string): Omit<TeamUser, 'passwordHash'> | null {
@@ -71,8 +87,7 @@ export function authenticate(email: string, password: string): Omit<TeamUser, 'p
   user.lastLogin = new Date().toISOString();
   saveAll(users);
 
-  const { passwordHash: _, ...safe } = user;
-  return safe;
+  return toPublicUser(user);
 }
 
 export function createMember(input: {
@@ -80,6 +95,7 @@ export function createMember(input: {
   email: string;
   password: string;
   role?: TeamRole;
+  features?: MemberFeature[];
 }): Omit<TeamUser, 'passwordHash'> {
   const users = loadAll();
   const email = normalizeEmail(input.email);
@@ -92,28 +108,28 @@ export function createMember(input: {
     throw new Error('Email already exists.');
   }
 
+  const role = input.role ?? 'member';
   const user: TeamUser = {
     id: `user-${Date.now()}`,
     name: input.name.trim(),
     email,
     passwordHash: hashPassword(password),
-    role: input.role ?? 'member',
+    role,
     active: true,
     createdAt: new Date().toISOString(),
+    features: role === 'member' ? validateFeatureList(input.features) : undefined,
   };
 
   users.push(user);
   saveAll(users);
 
-  const { passwordHash: _, ...safe } = user;
-  return safe;
+  return toPublicUser(user);
 }
 
 export function getMemberById(id: string): Omit<TeamUser, 'passwordHash'> | null {
   const user = loadAll().find((u) => u.id === id);
   if (!user) return null;
-  const { passwordHash: _, ...safe } = user;
-  return safe;
+  return toPublicUser(user);
 }
 
 export function updateProfile(
@@ -135,8 +151,7 @@ export function updateProfile(
   if (updates.name?.trim()) user.name = updates.name.trim();
 
   saveAll(users);
-  const { passwordHash: _, ...safe } = user;
-  return safe;
+  return toPublicUser(user);
 }
 
 export function changePassword(
@@ -161,7 +176,7 @@ export function changePassword(
 
 export function updateMember(
   id: string,
-  updates: Partial<Pick<TeamUser, 'name' | 'email' | 'role' | 'active'>> & { password?: string }
+  updates: Partial<Pick<TeamUser, 'name' | 'email' | 'role' | 'active' | 'features'>> & { password?: string }
 ): Omit<TeamUser, 'passwordHash'> {
   const users = loadAll();
   const index = users.findIndex((u) => u.id === id);
@@ -180,10 +195,21 @@ export function updateMember(
     if (!next || next.length < 6) throw new Error('Password must be at least 6 characters.');
     user.passwordHash = hashPassword(next);
   }
+  if (updates.features !== undefined) {
+    if (user.role !== 'member') {
+      throw new Error('Features can only be set for member accounts.');
+    }
+    user.features = validateFeatureList(updates.features);
+  }
+  if (updates.role === 'admin') {
+    delete user.features;
+  }
+  if (updates.role === 'member' && !user.features?.length) {
+    user.features = normalizeMemberFeatures(undefined);
+  }
 
   saveAll(users);
-  const { passwordHash: _, ...safe } = user;
-  return safe;
+  return toPublicUser(user);
 }
 
 export function deleteMember(id: string): void {
