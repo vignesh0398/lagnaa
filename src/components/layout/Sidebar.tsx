@@ -222,7 +222,7 @@ export function Sidebar() {
         className="flex items-center gap-3 border-b border-white/5 px-6 py-5 transition hover:bg-white/[0.03]"
         title={`${BRAND_NAME} home — news & updates`}
       >
-        <LagnaaLogo size={48} />
+        <LagnaaLogo size={48} blend />
         <div>
           <h1 className="text-lg font-bold text-white">
             {BRAND_SHORT} <span className="gradient-text">One</span>
