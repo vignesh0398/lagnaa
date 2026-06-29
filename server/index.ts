@@ -57,7 +57,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'lagnaa-api',
-    version: 'a93080c-workerbee',
+    version: 'marketing-timeout-fix',
     gitCommit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? null,
     features: { workerBee: true },
     teamPersistence: getTeamPersistenceMode(),
@@ -104,6 +104,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const server = http.createServer(app);
+server.timeout = 180_000;
+server.keepAliveTimeout = 185_000;
+server.headersTimeout = 190_000;
 attachConversationRelay(server);
 
 async function startServer(): Promise<void> {

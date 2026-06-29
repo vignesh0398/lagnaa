@@ -1,3 +1,4 @@
+import { fetchJsonAudit } from './fetchJson';
 import type { AudienceType, SeoActionPlan, SeoAuditCounts, SeoCategory } from './seo';
 
 export type MarketingToolType = 'competitor' | 'social' | 'local' | 'roadmap';
@@ -41,35 +42,29 @@ export interface MarketingHistoryItem {
 }
 
 export async function runCompetitorAudit(url: string, competitors: string[]): Promise<MarketingToolResult> {
-  const res = await fetch('/api/marketing/competitors/audit', {
+  const data = await fetchJsonAudit<{ result: MarketingToolResult }>('/api/marketing/competitors/audit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url, competitors }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Audit failed');
   return data.result;
 }
 
 export async function runSocialAudit(url: string): Promise<MarketingToolResult> {
-  const res = await fetch('/api/marketing/social/audit', {
+  const data = await fetchJsonAudit<{ result: MarketingToolResult }>('/api/marketing/social/audit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Audit failed');
   return data.result;
 }
 
 export async function runLocalAudit(url: string, businessName?: string, city?: string): Promise<MarketingToolResult> {
-  const res = await fetch('/api/marketing/local/audit', {
+  const data = await fetchJsonAudit<{ result: MarketingToolResult }>('/api/marketing/local/audit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url, businessName, city }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Audit failed');
   return data.result;
 }
 
@@ -78,13 +73,11 @@ export async function generateRoadmap(opts: {
   url?: string;
   audienceType?: AudienceType;
 }): Promise<MarketingToolResult> {
-  const res = await fetch('/api/marketing/roadmap/generate', {
+  const data = await fetchJsonAudit<{ result: MarketingToolResult }>('/api/marketing/roadmap/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(opts),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Roadmap failed');
   return data.result;
 }
 

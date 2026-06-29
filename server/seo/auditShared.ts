@@ -126,11 +126,26 @@ export function compositeSummary(audience: AudienceType, reports: MarketingRepor
   return `${audienceName} audit: ${avg}% average — substantial work needed across ${names}. Start with critical failures in each report.`;
 }
 
+export function friendlyFetchError(error: unknown, url?: string): string {
+  const label = url ? ` (${url})` : '';
+  if (error instanceof Error) {
+    const msg = error.message.toLowerCase();
+    if (error.name === 'TimeoutError' || msg.includes('aborted') || msg.includes('timeout')) {
+      return `The site took too long to respond${label}. Check the URL is correct and reachable, then try again.`;
+    }
+    if (msg.includes('fetch failed') || msg.includes('enotfound') || msg.includes('econnrefused')) {
+      return `Could not reach the website${label}. Check the URL and try again.`;
+    }
+    return error.message;
+  }
+  return `Failed to fetch website${label}.`;
+}
+
 export async function fetchResource(url: string, userAgent: string): Promise<{ ok: boolean; status: number; text?: string }> {
   try {
     const res = await fetch(url, {
       headers: { 'User-Agent': userAgent, Accept: 'text/html,text/plain,application/xml' },
-      signal: AbortSignal.timeout(10000),
+      signal: AbortSignal.timeout(12_000),
       redirect: 'follow',
     });
     const text = await res.text();

@@ -8,7 +8,8 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:3001',
         changeOrigin: true,
-        timeout: 10_000,
+        timeout: 180_000,
+        proxyTimeout: 180_000,
       },
       '/social-generated': {
         target: 'http://localhost:3001',

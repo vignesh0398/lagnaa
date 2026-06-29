@@ -1,3 +1,5 @@
+import { fetchJsonAudit } from './fetchJson';
+
 export type CheckStatus = 'pass' | 'warn' | 'fail';
 export type SeoAction = 'add' | 'remove' | 'improve' | 'keep';
 export type AudienceType = 'b2b' | 'b2c';
@@ -113,13 +115,11 @@ export interface SeoAuditSummary {
 }
 
 export async function runSeoAudit(url: string, audienceType: AudienceType = 'b2c'): Promise<SeoAuditResult> {
-  const res = await fetch('/api/seo/audit', {
+  const data = await fetchJsonAudit<{ audit: SeoAuditResult }>('/api/seo/audit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url, audienceType }),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Audit failed');
   return data.audit;
 }
 

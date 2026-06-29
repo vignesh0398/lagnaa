@@ -1,8 +1,8 @@
 import * as cheerio from 'cheerio';
 import type { CheerioAPI } from 'cheerio';
-import { fetchResource } from './auditShared.js';
+import { fetchResource, friendlyFetchError } from './auditShared.js';
 
-const FETCH_TIMEOUT = 20000;
+const FETCH_TIMEOUT = 30_000;
 export const USER_AGENT = 'Lagnaa-SEO-Audit/1.0 (+https://lagnaa.app)';
 
 export function normalizeInputUrl(input: string): string {
@@ -120,11 +120,16 @@ export async function fetchPageContext(inputUrl: string): Promise<PageAuditConte
   const startUrl = normalizeInputUrl(inputUrl);
   const startTime = Date.now();
 
-  const response = await fetch(startUrl, {
-    headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' },
-    signal: AbortSignal.timeout(FETCH_TIMEOUT),
-    redirect: 'follow',
-  });
+  let response: Response;
+  try {
+    response = await fetch(startUrl, {
+      headers: { 'User-Agent': USER_AGENT, Accept: 'text/html,application/xhtml+xml' },
+      signal: AbortSignal.timeout(FETCH_TIMEOUT),
+      redirect: 'follow',
+    });
+  } catch (error) {
+    throw new Error(friendlyFetchError(error, startUrl));
+  }
 
   const responseTimeMs = Date.now() - startTime;
   const html = await response.text();
