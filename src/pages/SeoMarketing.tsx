@@ -342,6 +342,7 @@ export function SeoMarketing() {
                 <p className="mt-4 text-sm text-slate-400">
                   Running {audienceType === 'b2b' ? 'SEO, GEO & LLMO' : 'SEO, AEO & GEO'} checks…
                 </p>
+                <p className="mt-1 text-xs text-slate-500">This can take 1–2 minutes — please keep this tab open.</p>
               </div>
             )}
 

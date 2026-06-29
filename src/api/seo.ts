@@ -1,4 +1,4 @@
-import { fetchJsonAudit } from './fetchJson';
+import { startAuditJob } from './fetchJson';
 
 export type CheckStatus = 'pass' | 'warn' | 'fail';
 export type SeoAction = 'add' | 'remove' | 'improve' | 'keep';
@@ -115,12 +115,11 @@ export interface SeoAuditSummary {
 }
 
 export async function runSeoAudit(url: string, audienceType: AudienceType = 'b2c'): Promise<SeoAuditResult> {
-  const data = await fetchJsonAudit<{ audit: SeoAuditResult }>('/api/seo/audit', {
+  return startAuditJob<SeoAuditResult>('/api/seo/audit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url, audienceType }),
   });
-  return data.audit;
 }
 
 export async function getSeoHistory(): Promise<{ audits: SeoAuditSummary[]; total: number }> {

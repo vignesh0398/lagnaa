@@ -107,6 +107,7 @@ export function MarketingRoadmap() {
         </div>
 
         {error && <p className="text-sm text-red-300">{error}</p>}
+        {loading && <p className="text-center text-sm text-slate-400">Building your 90-day roadmap… This can take 1–2 minutes.</p>}
 
         {phases && (
           <div className="space-y-4">

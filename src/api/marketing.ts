@@ -1,4 +1,4 @@
-import { fetchJsonAudit } from './fetchJson';
+import { startAuditJob } from './fetchJson';
 import type { AudienceType, SeoActionPlan, SeoAuditCounts, SeoCategory } from './seo';
 
 export type MarketingToolType = 'competitor' | 'social' | 'local' | 'roadmap';
@@ -42,30 +42,27 @@ export interface MarketingHistoryItem {
 }
 
 export async function runCompetitorAudit(url: string, competitors: string[]): Promise<MarketingToolResult> {
-  const data = await fetchJsonAudit<{ result: MarketingToolResult }>('/api/marketing/competitors/audit', {
+  return startAuditJob<MarketingToolResult>('/api/marketing/competitors/audit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url, competitors }),
   });
-  return data.result;
 }
 
 export async function runSocialAudit(url: string): Promise<MarketingToolResult> {
-  const data = await fetchJsonAudit<{ result: MarketingToolResult }>('/api/marketing/social/audit', {
+  return startAuditJob<MarketingToolResult>('/api/marketing/social/audit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url }),
   });
-  return data.result;
 }
 
 export async function runLocalAudit(url: string, businessName?: string, city?: string): Promise<MarketingToolResult> {
-  const data = await fetchJsonAudit<{ result: MarketingToolResult }>('/api/marketing/local/audit', {
+  return startAuditJob<MarketingToolResult>('/api/marketing/local/audit', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url, businessName, city }),
   });
-  return data.result;
 }
 
 export async function generateRoadmap(opts: {
@@ -73,12 +70,11 @@ export async function generateRoadmap(opts: {
   url?: string;
   audienceType?: AudienceType;
 }): Promise<MarketingToolResult> {
-  const data = await fetchJsonAudit<{ result: MarketingToolResult }>('/api/marketing/roadmap/generate', {
+  return startAuditJob<MarketingToolResult>('/api/marketing/roadmap/generate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(opts),
   });
-  return data.result;
 }
 
 export async function getMarketingHistory(type?: MarketingToolType): Promise<MarketingHistoryItem[]> {

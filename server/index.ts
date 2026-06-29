@@ -21,6 +21,7 @@ import billingRoutes from './routes/billing.js';
 import ghlRoutes from './routes/ghl.js';
 import seoRoutes from './routes/seo.js';
 import marketingRoutes from './routes/marketing.js';
+import auditJobsRoutes from './routes/auditJobs.js';
 import socialStudioRoutes from './routes/socialStudio.js';
 import contactsRoutes from './routes/contacts.js';
 import prospectsRoutes from './routes/prospects.js';
@@ -57,7 +58,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'lagnaa-api',
-    version: 'marketing-timeout-fix',
+    version: 'audit-jobs-polling',
     gitCommit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? null,
     features: { workerBee: true },
     teamPersistence: getTeamPersistenceMode(),
@@ -84,6 +85,7 @@ app.use('/api/billing', billingRoutes);
 app.use('/api/ghl', ghlRoutes);
 app.use('/api/seo', seoRoutes);
 app.use('/api/marketing', marketingRoutes);
+app.use('/api/audit-jobs', auditJobsRoutes);
 app.use('/api/social', socialStudioRoutes);
 app.use('/api/contacts', contactsRoutes);
 app.use('/api/prospects', prospectsRoutes);

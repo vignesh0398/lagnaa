@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createAuditJob, runAuditJob } from '../auditJobs.js';
 import { runMarketingAudit } from '../seo/marketingAuditor.js';
 import type { AudienceType } from '../seo/auditShared.js';
 import { exportAuditPdf } from '../seo/seoReportPdf.js';
@@ -79,23 +80,16 @@ router.delete('/:id', (req, res) => {
   res.json({ success: true });
 });
 
-router.post('/audit', async (req, res) => {
+router.post('/audit', (req, res) => {
   const { url, audienceType } = req.body as { url?: string; audienceType?: AudienceType };
   if (!url?.trim()) {
     return res.status(400).json({ error: 'Website URL is required.' });
   }
 
   const audience: AudienceType = audienceType === 'b2b' ? 'b2b' : 'b2c';
-
-  try {
-    const result = await runMarketingAudit(url.trim(), audience);
-    saveAudit(result);
-    res.json({ success: true, audit: result });
-  } catch (error) {
-    res.status(400).json({
-      error: error instanceof Error ? error.message : 'SEO audit failed',
-    });
-  }
+  const jobId = createAuditJob();
+  res.status(202).json({ success: true, jobId, status: 'pending' });
+  runAuditJob(jobId, () => runMarketingAudit(url.trim(), audience), saveAudit);
 });
 
 export default router;

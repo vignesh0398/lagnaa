@@ -35,22 +35,22 @@ export async function runCompetitorCompare(yourUrl: string, competitorUrls: stri
   const competitors = competitorUrls.slice(0, 3).filter(Boolean);
   if (!competitors.length) throw new Error('Add at least one competitor URL.');
 
-  const settled = await Promise.allSettled([
-    scoreSite(yourUrl, 'Your site'),
-    ...competitors.map((u) => scoreSite(u, 'Competitor')),
-  ]);
-
-  const yourResult = settled[0];
-  if (yourResult.status === 'rejected') {
-    throw yourResult.reason instanceof Error ? yourResult.reason : new Error('Could not analyze your website.');
+  let yourSite: CompetitorSiteScore;
+  try {
+    yourSite = await scoreSite(yourUrl, 'Your site');
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Could not analyze your website.');
   }
-  const yourSite = yourResult.value;
 
-  const rivalScores = settled.slice(1).flatMap((result, i) => {
-    if (result.status === 'fulfilled') return [result.value];
-    const reason = result.reason instanceof Error ? result.reason.message : 'Unknown error';
-    throw new Error(`Competitor ${i + 1} failed: ${reason}`);
-  });
+  const rivalScores: CompetitorSiteScore[] = [];
+  for (let i = 0; i < competitors.length; i++) {
+    try {
+      rivalScores.push(await scoreSite(competitors[i], 'Competitor'));
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Competitor ${i + 1} failed: ${reason}`);
+    }
+  }
 
   const all = [yourSite, ...rivalScores];
   const winner = all.reduce((best, cur) => (cur.score > best.score ? cur : best));

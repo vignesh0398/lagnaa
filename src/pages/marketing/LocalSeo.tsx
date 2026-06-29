@@ -58,6 +58,7 @@ export function LocalSeo() {
         </div>
 
         {error && <p className="text-sm text-red-300">{error}</p>}
+        {loading && <p className="text-center text-sm text-slate-400">Running local SEO audit… This can take up to a minute.</p>}
         {result && !loading && <MarketingResults result={result} />}
       </div>
     </div>

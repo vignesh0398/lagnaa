@@ -80,7 +80,11 @@ export function CompetitorCompare() {
         </div>
 
         {error && <p className="text-sm text-red-300">{error}</p>}
-        {loading && <p className="text-center text-slate-400">Auditing {competitors.filter(Boolean).length + 1} sites…</p>}
+        {loading && (
+          <p className="text-center text-slate-400">
+            Auditing {competitors.filter(Boolean).length + 1} sites… This can take 1–2 minutes.
+          </p>
+        )}
 
         {meta?.yourSite && meta.competitors && (
           <div className="glass-card overflow-x-auto p-5">

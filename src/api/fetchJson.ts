@@ -48,6 +48,42 @@ export async function fetchJsonAudit<T>(url: string, init?: RequestInit): Promis
   });
 }
 
+export type AuditJobStatus = 'pending' | 'running' | 'done' | 'error';
+
+interface AuditJobResponse<T> {
+  id: string;
+  status: AuditJobStatus;
+  result?: T;
+  error?: string;
+}
+
+const AUDIT_POLL_INTERVAL_MS = 1500;
+
+export async function pollAuditJob<T>(jobId: string): Promise<T> {
+  const deadline = Date.now() + AUDIT_REQUEST_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    await new Promise((resolve) => setTimeout(resolve, AUDIT_POLL_INTERVAL_MS));
+    const job = await fetchJson<AuditJobResponse<T>>(`/api/audit-jobs/${jobId}`);
+
+    if (job.status === 'done') {
+      if (job.result === undefined) throw new Error('Audit finished without a result.');
+      return job.result;
+    }
+    if (job.status === 'error') {
+      throw new Error(job.error || 'Audit failed');
+    }
+  }
+
+  throw new Error('The audit took too long. Try again — complex sites can take up to 2 minutes.');
+}
+
+export async function startAuditJob<T>(url: string, init?: RequestInit): Promise<T> {
+  const start = await fetchJsonAudit<{ jobId: string }>(url, init);
+  if (!start.jobId) throw new Error('Audit failed to start.');
+  return pollAuditJob<T>(start.jobId);
+}
+
 export async function checkApiHealth(): Promise<boolean> {
   try {
     const data = await fetchJson<{ ok?: boolean }>('/api/health', {

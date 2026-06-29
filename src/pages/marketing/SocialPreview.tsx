@@ -48,6 +48,7 @@ export function SocialPreview() {
         </div>
 
         {error && <p className="text-sm text-red-300">{error}</p>}
+        {loading && <p className="text-center text-sm text-slate-400">Checking social preview tags… This can take up to a minute.</p>}
 
         {previews && (
           <div className="grid gap-4 md:grid-cols-2">

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { createAuditJob, runAuditJob } from '../auditJobs.js';
 import { runCompetitorCompare } from '../marketing/competitorAuditor.js';
 import { runLocalSeoAudit } from '../marketing/localSeoAuditor.js';
 import { deleteMarketingResult, getMarketingById, listMarketingResults, saveMarketingResult } from '../marketing/marketingStore.js';
@@ -51,55 +52,39 @@ router.get('/history', (req, res) => {
   });
 });
 
-router.post('/competitors/audit', async (req, res) => {
+router.post('/competitors/audit', (req, res) => {
   const { url, competitors } = req.body as { url?: string; competitors?: string[] };
   if (!url?.trim()) return res.status(400).json({ error: 'Your website URL is required.' });
-  try {
-    const result = await runCompetitorCompare(url.trim(), competitors ?? []);
-    saveMarketingResult(result);
-    res.json({ success: true, result });
-  } catch (e) {
-    res.status(400).json({ error: e instanceof Error ? e.message : 'Audit failed' });
-  }
+  const jobId = createAuditJob();
+  res.status(202).json({ success: true, jobId, status: 'pending' });
+  runAuditJob(jobId, () => runCompetitorCompare(url.trim(), competitors ?? []), saveMarketingResult);
 });
 
-router.post('/social/audit', async (req, res) => {
+router.post('/social/audit', (req, res) => {
   const { url } = req.body as { url?: string };
   if (!url?.trim()) return res.status(400).json({ error: 'URL is required.' });
-  try {
-    const result = await runSocialPreviewAudit(url.trim());
-    saveMarketingResult(result);
-    res.json({ success: true, result });
-  } catch (e) {
-    res.status(400).json({ error: e instanceof Error ? e.message : 'Audit failed' });
-  }
+  const jobId = createAuditJob();
+  res.status(202).json({ success: true, jobId, status: 'pending' });
+  runAuditJob(jobId, () => runSocialPreviewAudit(url.trim()), saveMarketingResult);
 });
 
-router.post('/local/audit', async (req, res) => {
+router.post('/local/audit', (req, res) => {
   const { url, businessName, city } = req.body as { url?: string; businessName?: string; city?: string };
   if (!url?.trim()) return res.status(400).json({ error: 'URL is required.' });
-  try {
-    const result = await runLocalSeoAudit(url.trim(), businessName, city);
-    saveMarketingResult(result);
-    res.json({ success: true, result });
-  } catch (e) {
-    res.status(400).json({ error: e instanceof Error ? e.message : 'Audit failed' });
-  }
+  const jobId = createAuditJob();
+  res.status(202).json({ success: true, jobId, status: 'pending' });
+  runAuditJob(jobId, () => runLocalSeoAudit(url.trim(), businessName, city), saveMarketingResult);
 });
 
-router.post('/roadmap/generate', async (req, res) => {
+router.post('/roadmap/generate', (req, res) => {
   const { auditId, url, audienceType } = req.body as {
     auditId?: string;
     url?: string;
     audienceType?: AudienceType;
   };
-  try {
-    const result = await runRoadmapGenerate({ auditId, url, audienceType });
-    saveMarketingResult(result);
-    res.json({ success: true, result });
-  } catch (e) {
-    res.status(400).json({ error: e instanceof Error ? e.message : 'Roadmap failed' });
-  }
+  const jobId = createAuditJob();
+  res.status(202).json({ success: true, jobId, status: 'pending' });
+  runAuditJob(jobId, () => runRoadmapGenerate({ auditId, url, audienceType }), saveMarketingResult);
 });
 
 router.get('/:id/export', async (req, res) => {
