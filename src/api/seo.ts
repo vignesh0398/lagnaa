@@ -1,4 +1,4 @@
-import { startAuditJob } from './fetchJson';
+import { fetchJson, startAuditJob } from './fetchJson';
 
 export type CheckStatus = 'pass' | 'warn' | 'fail';
 export type SeoAction = 'add' | 'remove' | 'improve' | 'keep';
@@ -123,20 +123,15 @@ export async function runSeoAudit(url: string, audienceType: AudienceType = 'b2c
 }
 
 export async function getSeoHistory(): Promise<{ audits: SeoAuditSummary[]; total: number }> {
-  const res = await fetch('/api/seo/history');
-  if (!res.ok) throw new Error('Failed to load history');
-  return res.json();
+  return fetchJson<{ audits: SeoAuditSummary[]; total: number }>('/api/seo/history');
 }
 
 export async function getSeoAudit(id: string): Promise<SeoAuditResult> {
-  const res = await fetch(`/api/seo/${id}`);
-  if (!res.ok) throw new Error('Audit not found');
-  return res.json();
+  return fetchJson<SeoAuditResult>(`/api/seo/${encodeURIComponent(id)}`);
 }
 
 export async function deleteSeoAudit(id: string): Promise<void> {
-  const res = await fetch(`/api/seo/${id}`, { method: 'DELETE' });
-  if (!res.ok) throw new Error('Failed to delete audit');
+  await fetchJson(`/api/seo/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
 
 export function getSeoExportUrl(id: string, format: 'html' | 'csv' | 'json' | 'pdf'): string {

@@ -58,7 +58,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'lagnaa-api',
-    version: 'audit-jobs-polling',
+    version: 'json-api-fix',
     gitCommit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? null,
     features: { workerBee: true },
     teamPersistence: getTeamPersistenceMode(),
@@ -94,13 +94,18 @@ app.use('/api/news', newsRoutes);
 app.use('/api/gdpr', gdprRoutes);
 app.use('/api/workerbee', workerbeeRoutes);
 
+app.use('/api', (req, res) => {
+  res.status(404).json({
+    error: `API route not found: ${req.method} ${req.originalUrl}`,
+  });
+});
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distPath = path.join(__dirname, '..', 'dist');
 
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(distPath));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
+  app.get('*', (_req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));
   });
 }

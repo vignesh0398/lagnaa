@@ -1,4 +1,4 @@
-import { startAuditJob } from './fetchJson';
+import { fetchJson, startAuditJob } from './fetchJson';
 import type { AudienceType, SeoActionPlan, SeoAuditCounts, SeoCategory } from './seo';
 
 export type MarketingToolType = 'competitor' | 'social' | 'local' | 'roadmap';
@@ -79,35 +79,29 @@ export async function generateRoadmap(opts: {
 
 export async function getMarketingHistory(type?: MarketingToolType): Promise<MarketingHistoryItem[]> {
   const q = type ? `?type=${type}` : '';
-  const res = await fetch(`/api/marketing/history${q}`);
-  if (!res.ok) throw new Error('Failed to load history');
-  const data = await res.json();
+  const data = await fetchJson<{ items: MarketingHistoryItem[] }>(`/api/marketing/history${q}`);
   return data.items;
 }
 
 export async function getWhiteLabel(): Promise<WhiteLabelConfig> {
-  const res = await fetch('/api/marketing/white-label');
-  if (!res.ok) throw new Error('Failed to load settings');
-  return res.json();
+  return fetchJson<WhiteLabelConfig>('/api/marketing/white-label');
 }
 
 export async function saveWhiteLabel(config: Partial<WhiteLabelConfig>): Promise<WhiteLabelConfig> {
-  const res = await fetch('/api/marketing/white-label', {
+  const data = await fetchJson<{ config: WhiteLabelConfig }>('/api/marketing/white-label', {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
   });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'Save failed');
   return data.config;
 }
 
 export async function getSeoAuditsForRoadmap(): Promise<
   { id: string; url: string; score: number; grade: string; audienceType: string; auditedAt: string }[]
 > {
-  const res = await fetch('/api/marketing/seo-audits');
-  if (!res.ok) throw new Error('Failed to load SEO audits');
-  const data = await res.json();
+  const data = await fetchJson<{ audits: { id: string; url: string; score: number; grade: string; audienceType: string; auditedAt: string }[] }>(
+    '/api/marketing/seo-audits'
+  );
   return data.audits;
 }
 
