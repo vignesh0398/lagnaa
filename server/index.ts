@@ -33,6 +33,11 @@ import { getWebhookBaseUrl, startTunnel } from './tunnel.js';
 import { loadedSecretFiles } from './bootstrapEnv.js';
 import { friendlyMongoError, isMongoConfigured } from './db/mongoTeam.js';
 import {
+  getContactsPersistenceMode,
+  initContactsStore,
+  isContactsPersistenceDurable,
+} from './contacts/contactsStore.js';
+import {
   getMongoInitError,
   initTeamStore,
   isTeamPersistenceDurable,
@@ -58,11 +63,13 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'lagnaa-api',
-    version: 'pdf-chromium-fix',
+    version: 'contacts-mongo-persist',
     gitCommit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? null,
     features: { workerBee: true },
     teamPersistence: getTeamPersistenceMode(),
     teamDataDurable: isTeamPersistenceDurable(),
+    contactsPersistence: getContactsPersistenceMode(),
+    contactsDataDurable: isContactsPersistenceDurable(),
     mongodbEnvSet: isMongoConfigured(),
     secretEnvFilesLoaded: loadedSecretFiles,
     mongodbError: friendlyMongoError(getMongoInitError()),
@@ -118,9 +125,11 @@ attachConversationRelay(server);
 
 async function startServer(): Promise<void> {
   await initTeamStore();
+  await initContactsStore();
   server.listen(PORT, async () => {
     console.log(`Lagnaa API running on port ${PORT}`);
     console.log(`[Team] Persistence: ${getTeamPersistenceMode()} (durable=${isTeamPersistenceDurable()})`);
+    console.log(`[Contacts] Persistence: ${getContactsPersistenceMode()} (durable=${isContactsPersistenceDurable()})`);
     if (process.env.NODE_ENV === 'production' && !isTeamPersistenceDurable()) {
       console.warn('[Team] Live team accounts reset on each Render redeploy unless MONGODB_URI or DATA_DIR is set.');
     }

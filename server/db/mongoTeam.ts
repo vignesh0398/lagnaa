@@ -104,6 +104,11 @@ export async function connectMongoTeam(): Promise<Collection<TeamUser> | null> {
   }
 }
 
+export async function getMongoDatabase(): Promise<Db | null> {
+  await connectMongoTeam();
+  return db;
+}
+
 export async function loadTeamFromMongo(): Promise<TeamUser[]> {
   const col = await connectMongoTeam();
   if (!col) return [];

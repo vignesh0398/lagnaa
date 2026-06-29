@@ -10,9 +10,11 @@ import {
   type ContactFilterField,
 } from './contactHelpers.js';
 import type { Contact, ContactsConfig } from './contactsTypes.js';
+import { loadContactsFromMongo, saveContactsToMongo } from '../db/mongoContacts.js';
+import { isMongoConfigured } from '../db/mongoTeam.js';
+import { getDataFile } from '../utils/dataPath.js';
 
-const STORE_PATH = path.join(process.cwd(), 'server', 'data', 'contacts.json');
-const MAX_CONTACTS = 5000;
+export const MAX_CONTACTS = 5000;
 
 const DEFAULT_CONFIG: ContactsConfig = {
   autoCallOnTag: false,
@@ -27,22 +29,106 @@ interface ContactsStore {
   contacts: Contact[];
 }
 
-function loadStore(): ContactsStore {
-  if (!fs.existsSync(STORE_PATH)) {
-    const initial: ContactsStore = { config: { ...DEFAULT_CONFIG }, contacts: [] };
-    saveStore(initial);
-    return initial;
+export type ContactsPersistenceMode = 'mongo' | 'file';
+
+let storeCache: ContactsStore | null = null;
+let persistenceMode: ContactsPersistenceMode = 'file';
+
+function getStorePath(): string {
+  return getDataFile('contacts.json');
+}
+
+function readContactsFile(): ContactsStore | null {
+  const filePath = getStorePath();
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    const raw = JSON.parse(fs.readFileSync(filePath, 'utf-8')) as ContactsStore;
+    return {
+      config: { ...DEFAULT_CONFIG, ...raw.config },
+      contacts: raw.contacts ?? [],
+    };
+  } catch {
+    return null;
   }
-  const raw = JSON.parse(fs.readFileSync(STORE_PATH, 'utf-8')) as ContactsStore;
-  return {
-    config: { ...DEFAULT_CONFIG, ...raw.config },
-    contacts: raw.contacts ?? [],
-  };
+}
+
+function writeContactsFile(store: ContactsStore): void {
+  const filePath = getStorePath();
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(store, null, 2));
+}
+
+function emptyStore(): ContactsStore {
+  return { config: { ...DEFAULT_CONFIG }, contacts: [] };
+}
+
+function loadStore(): ContactsStore {
+  if (!storeCache) {
+    throw new Error('Contacts store not initialized. Call initContactsStore() on server startup.');
+  }
+  return storeCache;
 }
 
 function saveStore(store: ContactsStore): void {
-  fs.mkdirSync(path.dirname(STORE_PATH), { recursive: true });
-  fs.writeFileSync(STORE_PATH, JSON.stringify(store, null, 2));
+  storeCache = store;
+  if (persistenceMode === 'mongo') {
+    void saveContactsToMongo(store.config, store.contacts).catch((error) => {
+      console.error('[Contacts] Mongo save failed:', error);
+    });
+    return;
+  }
+  writeContactsFile(store);
+}
+
+export function getContactsPersistenceMode(): ContactsPersistenceMode {
+  return persistenceMode;
+}
+
+export function isContactsPersistenceDurable(): boolean {
+  return persistenceMode === 'mongo' || Boolean(process.env.DATA_DIR?.trim());
+}
+
+export async function initContactsStore(): Promise<void> {
+  if (isMongoConfigured()) {
+    try {
+      persistenceMode = 'mongo';
+      const fromMongo = await loadContactsFromMongo();
+      if (fromMongo?.contacts?.length) {
+        storeCache = {
+          config: { ...DEFAULT_CONFIG, ...fromMongo.config },
+          contacts: fromMongo.contacts,
+        };
+        console.log(`[Contacts] Loaded ${fromMongo.contacts.length} contact(s) from MongoDB`);
+        return;
+      }
+
+      const fromFile = readContactsFile();
+      if (fromFile?.contacts.length) {
+        storeCache = fromFile;
+        await saveContactsToMongo(fromFile.config, fromFile.contacts);
+        console.log(`[Contacts] Migrated ${fromFile.contacts.length} contact(s) from file to MongoDB`);
+        return;
+      }
+
+      storeCache = emptyStore();
+      await saveContactsToMongo(storeCache.config, storeCache.contacts);
+      console.log('[Contacts] Initialized empty store in MongoDB');
+      return;
+    } catch (error) {
+      console.error(
+        '[Contacts] MongoDB init failed, using file storage:',
+        error instanceof Error ? error.message : error
+      );
+      persistenceMode = 'file';
+    }
+  }
+
+  persistenceMode = 'file';
+  storeCache = readContactsFile() ?? emptyStore();
+  if (!fs.existsSync(getStorePath())) {
+    writeContactsFile(storeCache);
+  }
+  console.log(`[Contacts] Loaded ${storeCache.contacts.length} contact(s) from file (${getStorePath()})`);
 }
 
 export function getContactsConfig(): ContactsConfig {
@@ -370,6 +456,9 @@ export function getContactsStats(): {
   called: number;
   triggerTag: string;
   autoCallOnTag: boolean;
+  maxContacts: number;
+  persistence: ContactsPersistenceMode;
+  durable: boolean;
 } {
   const store = loadStore();
   const contacts = store.contacts;
@@ -379,5 +468,8 @@ export function getContactsStats(): {
     called: contacts.filter((c) => c.callCount > 0).length,
     triggerTag: store.config.callTriggerTag,
     autoCallOnTag: store.config.autoCallOnTag,
+    maxContacts: MAX_CONTACTS,
+    persistence: persistenceMode,
+    durable: isContactsPersistenceDurable(),
   };
 }
