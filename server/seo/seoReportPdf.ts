@@ -1,25 +1,13 @@
-import puppeteer, { type Browser } from 'puppeteer';
 import type { SeoAuditResult } from './seoAuditor.js';
 import { exportAuditHtml } from './seoReportExport.js';
-
-let browserPromise: Promise<Browser> | null = null;
-
-async function getBrowser(): Promise<Browser> {
-  if (!browserPromise) {
-    browserPromise = puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--font-render-hinting=none'],
-    });
-  }
-  return browserPromise;
-}
+import { closePuppeteerBrowser, getPuppeteerBrowser } from '../utils/puppeteerBrowser.js';
 
 export async function exportHtmlToPdf(html: string): Promise<Buffer> {
-  const browser = await getBrowser();
+  const browser = await getPuppeteerBrowser();
   const page = await browser.newPage();
 
   try {
-    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 45000 });
+    await page.setContent(html, { waitUntil: 'load', timeout: 45000 });
     const pdf = await page.pdf({
       format: 'A4',
       printBackground: true,
@@ -37,9 +25,5 @@ export async function exportAuditPdf(audit: SeoAuditResult): Promise<Buffer> {
 }
 
 export async function closePdfBrowser(): Promise<void> {
-  if (browserPromise) {
-    const browser = await browserPromise;
-    browserPromise = null;
-    await browser.close();
-  }
+  await closePuppeteerBrowser();
 }

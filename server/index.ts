@@ -58,7 +58,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'lagnaa-api',
-    version: 'json-api-fix',
+    version: 'pdf-chromium-fix',
     gitCommit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? null,
     features: { workerBee: true },
     teamPersistence: getTeamPersistenceMode(),

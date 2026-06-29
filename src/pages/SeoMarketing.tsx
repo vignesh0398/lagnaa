@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Header } from '../components/layout/Header';
 import { StatCard } from '../components/ui/StatCard';
+import { downloadExportFile } from '../api/downloadExport';
 import {
   deleteSeoAudit,
   getSeoAudit,
@@ -235,9 +236,19 @@ export function SeoMarketing() {
     }
   };
 
-  const download = (format: 'html' | 'csv' | 'json' | 'pdf') => {
+  const download = async (format: 'html' | 'csv' | 'json' | 'pdf') => {
     if (!audit) return;
-    window.open(getSeoExportUrl(audit.id, format), '_blank');
+    const url = getSeoExportUrl(audit.id, format);
+    if (format === 'json') {
+      window.open(url, '_blank');
+      return;
+    }
+    setError('');
+    try {
+      await downloadExportFile(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Download failed');
+    }
   };
 
   const reports = audit ? getReports(audit) : [];

@@ -1,19 +1,7 @@
-import puppeteer, { type Browser } from 'puppeteer';
-
-let browserPromise: Promise<Browser> | null = null;
-
-async function getBrowser(): Promise<Browser> {
-  if (!browserPromise) {
-    browserPromise = puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--font-render-hinting=none'],
-    });
-  }
-  return browserPromise;
-}
+import { getPuppeteerBrowser } from './puppeteerBrowser.js';
 
 export async function renderHtmlToPng(html: string, width: number, height: number): Promise<Buffer> {
-  const browser = await getBrowser();
+  const browser = await getPuppeteerBrowser();
   const page = await browser.newPage();
   try {
     await page.setViewport({ width, height, deviceScaleFactor: 1 });

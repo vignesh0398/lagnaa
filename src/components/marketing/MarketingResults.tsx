@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { AlertCircle, CheckCircle2, Download, FileText, XCircle } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Download, FileText, Loader2, XCircle } from 'lucide-react';
+import { downloadExportFile } from '../../api/downloadExport';
 import type { MarketingToolResult } from '../../api/marketing';
 import type { CheckStatus, SeoActionItem } from '../../api/seo';
 import { getMarketingExportUrl } from '../../api/marketing';
@@ -41,8 +43,19 @@ function ActionBlock({ title, items }: { title: string; items: SeoActionItem[] }
 
 export function MarketingResults({ result }: { result: MarketingToolResult }) {
   const plan = result.actionPlan;
-  const download = (format: 'pdf' | 'html' | 'csv') => {
-    window.open(getMarketingExportUrl(result.id, format), '_blank');
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState('');
+
+  const download = async (format: 'pdf' | 'html' | 'csv') => {
+    setDownloading(true);
+    setDownloadError('');
+    try {
+      await downloadExportFile(getMarketingExportUrl(result.id, format));
+    } catch (error) {
+      setDownloadError(error instanceof Error ? error.message : 'Download failed');
+    } finally {
+      setDownloading(false);
+    }
   };
 
   return (
@@ -61,15 +74,17 @@ export function MarketingResults({ result }: { result: MarketingToolResult }) {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <button onClick={() => download('pdf')} className="btn-primary text-xs">
-              <Download className="h-3.5 w-3.5" /> PDF
+            <button onClick={() => download('pdf')} disabled={downloading} className="btn-primary text-xs">
+              {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+              PDF
             </button>
-            <button onClick={() => download('html')} className="btn-secondary text-xs">
+            <button onClick={() => download('html')} disabled={downloading} className="btn-secondary text-xs">
               <FileText className="h-3.5 w-3.5" /> HTML
             </button>
-            <button onClick={() => download('csv')} className="btn-secondary text-xs">
+            <button onClick={() => download('csv')} disabled={downloading} className="btn-secondary text-xs">
               <Download className="h-3.5 w-3.5" /> CSV
             </button>
+            {downloadError && <p className="text-[10px] text-red-300">{downloadError}</p>}
           </div>
         </div>
       </motion.div>
