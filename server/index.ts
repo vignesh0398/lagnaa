@@ -63,7 +63,7 @@ app.get('/api/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'lagnaa-api',
-    version: 'contacts-mongo-persist',
+    version: 'call-readiness-check',
     gitCommit: process.env.RENDER_GIT_COMMIT?.slice(0, 7) ?? null,
     features: { workerBee: true },
     teamPersistence: getTeamPersistenceMode(),

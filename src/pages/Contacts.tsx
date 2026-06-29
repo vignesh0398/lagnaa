@@ -41,6 +41,7 @@ import {
   type ContactsConfig,
 } from '../api/contacts';
 import { getAgents, type Agent } from '../api/agents';
+import { getCallReadiness, type CallReadiness } from '../api/twilio';
 import {
   CONTACT_FILTER_FIELDS,
   PAGE_SIZE_OPTIONS,
@@ -133,11 +134,12 @@ export function Contacts() {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState('');
   const [callModalContact, setCallModalContact] = useState<Contact | null>(null);
+  const [callReadiness, setCallReadiness] = useState<CallReadiness | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [list, all, tagsRes, s, c, agentsData] = await Promise.all([
+      const [list, all, tagsRes, s, c, agentsData, readiness] = await Promise.all([
         getContacts({
           search: search || undefined,
           tag: tagFilter || undefined,
@@ -151,6 +153,7 @@ export function Contacts() {
         getContactsStats(),
         getContactsConfig(),
         getAgents(),
+        getCallReadiness().catch(() => null),
       ]);
       setContacts(list.contacts);
       setTotal(list.total);
@@ -161,6 +164,7 @@ export function Contacts() {
       setStats(s);
       setConfig(c);
       setAgents(agentsData.agents);
+      setCallReadiness(readiness);
       setSelectedAgentId((prev) => {
         if (prev && agentsData.agents.some((a) => a.id === prev)) return prev;
         return agentsData.publishedId || agentsData.agents[0]?.id || '';
@@ -436,6 +440,30 @@ export function Contacts() {
       />
 
       <div className="space-y-6 p-8">
+        {callReadiness && !callReadiness.ready && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 px-5 py-4 text-sm text-amber-100">
+            <p className="font-semibold text-amber-200">Calls are not ready — &quot;Call now&quot; will fail until this is fixed:</p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-amber-100/90">
+              {callReadiness.issues.map((issue) => (
+                <li key={issue}>{issue}</li>
+              ))}
+            </ul>
+            <p className="mt-3 text-xs text-amber-200/80">
+              Fix in{' '}
+              <Link to="/gateway" className="underline hover:text-white">
+                Connections (Gateway)
+              </Link>{' '}
+              and{' '}
+              <Link to="/agents" className="underline hover:text-white">
+                AI Agents (Publish)
+              </Link>
+              . On Render, set <span className="font-mono">TWILIO_ACCOUNT_SID</span>,{' '}
+              <span className="font-mono">TWILIO_AUTH_TOKEN</span>, and{' '}
+              <span className="font-mono">TWILIO_PHONE_NUMBER</span> in Environment variables.
+            </p>
+          </div>
+        )}
+
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard label="Total contacts" value={stats.total} icon={Users} accent="cyan" />
           <StatCard label="Tagged" value={stats.withTags} icon={Tag} accent="violet" />

@@ -34,6 +34,19 @@ export function getTwilioStatus() {
   return api<TwilioStatus>('/api/twilio/status');
 }
 
+export interface CallReadiness {
+  ready: boolean;
+  issues: string[];
+  twilioConnected: boolean;
+  publishedAgent: string | null;
+  phoneNumber: string | null;
+  webhookBase: string | null;
+}
+
+export function getCallReadiness() {
+  return api<CallReadiness>('/api/twilio/call-readiness');
+}
+
 export function connectTwilio(credentials: {
   accountSid: string;
   authToken: string;

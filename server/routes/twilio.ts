@@ -9,6 +9,7 @@ import {
 } from '../config.js';
 import { getStoredRecord, upsertFromSession } from '../ai/callHistoryStore.js';
 import { getSession, markEnded } from '../ai/conversation.js';
+import { getPublishedPrompt } from '../ai/promptStore.js';
 import { getDefaultFromNumber, getTwilioClient } from '../twilioClient.js';
 import { getWebhookBaseUrl } from '../tunnel.js';
 import {
@@ -107,6 +108,48 @@ router.get('/status', async (_req, res) => {
     const message = error instanceof Error ? error.message : 'Connection failed';
     return res.json({ connected: false, message });
   }
+});
+
+router.get('/call-readiness', async (_req, res) => {
+  const config = loadTwilioConfig();
+  const client = getTwilioClient();
+  const published = getPublishedPrompt();
+  const webhookBase = getWebhookBaseUrl();
+  const issues: string[] = [];
+
+  if (!config?.accountSid || !config?.authToken) {
+    issues.push('Twilio not configured — open Connections (Gateway) and add Account SID + Auth Token.');
+  } else if (!client) {
+    issues.push('Twilio credentials are invalid.');
+  } else {
+    try {
+      await client.api.accounts(config.accountSid).fetch();
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Twilio auth failed';
+      issues.push(`Twilio authentication failed: ${msg}`);
+    }
+  }
+
+  if (!config?.phoneNumber?.trim()) {
+    issues.push('No Twilio phone number set — add your outbound caller ID in Connections.');
+  }
+
+  if (!published) {
+    issues.push('No published AI agent — open AI Agents, create one, and click Publish.');
+  }
+
+  if (!webhookBase) {
+    issues.push('No public webhook URL — on Render this should be automatic; check PUBLIC_WEBHOOK_URL.');
+  }
+
+  res.json({
+    ready: issues.length === 0,
+    issues,
+    twilioConnected: issues.every((i) => !i.toLowerCase().includes('twilio')),
+    publishedAgent: published?.agentName ?? null,
+    phoneNumber: config?.phoneNumber ?? null,
+    webhookBase,
+  });
 });
 
 router.post('/connect', async (req, res) => {
